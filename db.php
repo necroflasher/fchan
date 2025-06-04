@@ -29,14 +29,16 @@ function db_open()
 	return $db;
 }
 
-function db_can_post_file($md5)
+function db_can_up($t)
 {
 	$rv = true;
 	$db = db_open();
 	$q = $db->prepare('
-	SELECT 1 FROM dat WHERE md5=?
+	SELECT 1 FROM dat WHERE md5=? OR (fname=? AND fext=?)
 	');
-	$q->bindValue(1, $md5, SQLITE3_BLOB);
+	$q->bindValue(1, $t['md5'],   SQLITE3_BLOB);
+	$q->bindValue(2, $t['fname'], SQLITE3_TEXT);
+	$q->bindValue(3, $t['fext'],  SQLITE3_TEXT);
 	$res = $q->execute();
 	if ($res && $res->numColumns() && $res->fetchArray(SQLITE3_NUM))
 		$rv = false;
@@ -45,8 +47,10 @@ function db_can_post_file($md5)
 	return $rv;
 }
 
-function db_submit_file($t)
+function db_up($t)
 {
+	if (!db_can_up($t))
+		return 'File exists.';
 	$db = db_open();
 	$q = $db->prepare('
 	INSERT INTO dat (
@@ -65,13 +69,15 @@ function db_submit_file($t)
 	$q->bindValue(5, $t['fname'], SQLITE3_TEXT);
 	$q->bindValue(6, $t['fext'],  SQLITE3_TEXT);
 	$q->bindValue(7, $t['fsize'], SQLITE3_INTEGER);
-	$res = !!$q->execute();
+	$res = $q->execute();
 	$q->close();
 	$db->close();
-	return $res;
+	if (!$res)
+		return 'Failed to insert post.';
+	return '';
 }
 
-function db_submit_comment($t)
+function db_re($t)
 {
 	$db = db_open();
 	$q = $db->prepare('
@@ -86,10 +92,12 @@ function db_submit_comment($t)
 	$q->bindValue(2, $t['tno'],  SQLITE3_INTEGER);
 	$q->bindValue(3, $t['name'], SQLITE3_TEXT);
 	$q->bindValue(4, $t['body'], SQLITE3_TEXT);
-	$res = !!$q->execute();
+	$res = $q->execute();
 	$q->close();
 	$db->close();
-	return $res;
+	if (!$res)
+		return 'Failed to insert post.';
+	return '';
 }
 
 function db_get_front()

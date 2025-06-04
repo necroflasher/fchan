@@ -11,13 +11,12 @@
 # - file tags
 # - files stored with original filenames
 #   - sanitize
-#   - check duplicate
 # - quote links
 # - spam protection
 #   - first, prevent accidental resubmission
 #   - post cooldown (show using post confirm screen?)
 
-const FCHAN_DB = '/tmp/fchan.19.db';
+const FCHAN_DB = '/tmp/fchan.20.db';
 
 const FRONT_PUBLIC = '/fchan/';
 

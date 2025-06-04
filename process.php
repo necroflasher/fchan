@@ -18,17 +18,10 @@ function process_up()
 
 	$destfile = FILES_DIR.'/'.bin2hex($md5).$fext;
 
-	//~ if (file_exists($destfile))
-	if (!db_can_post_file($md5))
-	{
-		unlink($_FILES["file"]["tmp_name"]);
-		die('Error: File exists.');
-	}
-
 	$com = htmlspecialchars($com);
 	$com = preg_replace('/\n/', '<BR>', $com);
 
-	$res = db_submit_file([
+	$err = db_up([
 		'sub'   => htmlspecialchars($sub),
 		'nam'   => htmlspecialchars($nam),
 		'com'   => $com,
@@ -38,11 +31,7 @@ function process_up()
 		'fsize' => $fsize,
 	]);
 
-	if (!$res)
-	{
-		unlink($_FILES["file"]["tmp_name"]);
-		die();
-	}
+	$err and die("Error: $err");
 
 	move_uploaded_file(
 		$_FILES["file"]["tmp_name"],
@@ -63,13 +52,13 @@ function process_re()
 	$com = htmlspecialchars($com);
 	$com = preg_replace('/\n/', '<BR>', $com);
 
-	$ok = db_submit_comment([
+	$err = db_re([
 		'tno'  => $tno,
 		'name' => $nam,
 		'body' => $com,
 	]);
 
-	$ok or die('Error: Failed to insert post.');
+	$err and die("Error: $err");
 
 	echo 'Post created. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">Return</A>';
 }
