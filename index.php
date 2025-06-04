@@ -9,14 +9,12 @@
 #   - blank out comments
 #   - threads gone from index
 # - file tags
-# - files stored with original filenames
-#   - sanitize
 # - quote links
 # - spam protection
 #   - first, prevent accidental resubmission
 #   - post cooldown (show using post confirm screen?)
 
-const FCHAN_DB = '/tmp/fchan.20.db';
+const FCHAN_DB = '/tmp/fchan.22.db';
 
 const FRONT_PUBLIC = '/fchan/';
 

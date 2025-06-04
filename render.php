@@ -47,7 +47,7 @@ function render_front()
 		echo '<TR>';
 		echo '<TD align="right">',$t['no'];
 		echo '<TD><B>',$t['name']?$t['name']:'Anonymous','</B>';
-		echo '<TD><A href="',FILES_DIR_PUBLIC,'/',bin2hex($t['md5']),$t['fext'],'">',$t['fname'],$t['fext'],'</A>';
+		echo '<TD><A href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'">',htmlspecialchars($t['fname']),$t['fext'],'</A>';
 		echo '<TD>',$t['subject'];
 		echo '<TD>',format_fs($t['fsize']);
 		echo '<TD>',$t['coms'];
@@ -108,8 +108,8 @@ function render_thread()
 		{
 			if ($t['body'])
 				echo '<BR><BR>';
-			echo '<A href="',FILES_DIR_PUBLIC,'/',bin2hex($t['md5']),$t['fext'],'">';
-			echo $t['fname'],$t['fext'];
+			echo '<A href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'">';
+			echo htmlspecialchars($t['fname']),$t['fext'];
 			echo '</A>';
 			
 		}

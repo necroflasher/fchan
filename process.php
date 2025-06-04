@@ -16,7 +16,8 @@ function process_up()
 	$fext  = '.'.pathinfo($_FILES["file"]["name"], PATHINFO_EXTENSION);
 	$fsize = $_FILES["file"]["size"];
 
-	$destfile = FILES_DIR.'/'.bin2hex($md5).$fext;
+	preg_match('/^[^.\/][^\/]{0,126}$/', $fname) or die('Error: Bad filename.');
+	@EXTS[$fext] or die('Error: Unsupported filetype.');
 
 	$com = htmlspecialchars($com);
 	$com = preg_replace('/\n/', '<BR>', $com);
@@ -26,8 +27,8 @@ function process_up()
 		'nam'   => htmlspecialchars($nam),
 		'com'   => $com,
 		'md5'   => $md5,
-		'fname' => htmlspecialchars($fname),
-		'fext'  => htmlspecialchars($fext),
+		'fname' => $fname,
+		'fext'  => $fext,
 		'fsize' => $fsize,
 	]);
 
@@ -35,7 +36,7 @@ function process_up()
 
 	move_uploaded_file(
 		$_FILES["file"]["tmp_name"],
-		$destfile);
+		FILES_DIR.'/'.$fname.$fext);
 
 	echo 'Upload complete. <A href="',FRONT_PUBLIC,'">Return</A>';
 }
