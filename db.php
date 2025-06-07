@@ -15,7 +15,8 @@ function db_firstrun()
 		fname   TEXT,
 		fext    TEXT,
 		fsize   INTEGER,
-		deleted INTEGER
+		deleted INTEGER,
+		fpurged INTEGER
 	) STRICT
 	");
 	$db = null;
@@ -124,7 +125,8 @@ function db_del($tno, $cno)
 		subject=NULL,
 		name=NULL,
 		body=NULL,
-		fname=NULL
+		fname=NULL,
+		fpurged=(CASE cno WHEN 1 THEN 1 ELSE NULL END)
 	WHERE tno=? AND cno=?
 	");
 	$q->bindValue(1, $tno, PDO::PARAM_INT);
@@ -163,6 +165,44 @@ function db_get_front()
 	');
 	$q->execute();
 	$rv = $q->fetchAll();
+	$q = null;
+	$db = null;
+	return $rv;
+}
+
+# call after inserting a new thread
+# returns threads whose file must be deleted
+function db_claim_purge_files()
+{
+	$dat = db_get_front();
+	if (!is_array($dat))
+		return [];
+	$old = INF;
+	foreach ($dat as $t)
+		if ($t['no'] < $old)
+			$old = $t['no'];
+	if (is_infinite($old))
+		return [];
+
+	$db = db_open();
+
+	# list
+	$q = $db->prepare('
+	SELECT * FROM dat
+	WHERE tno<? AND cno=1 AND fpurged IS NULL
+	');
+	$q->bindValue(1, $old, PDO::PARAM_INT);
+	$q->execute();
+	$rv = $q->fetchAll();
+
+	# mark
+	$q = $db->prepare('
+	UPDATE dat SET fpurged=1
+	WHERE tno<? AND cno=1 AND fpurged IS NULL
+	');
+	$q->bindValue(1, $old, PDO::PARAM_INT);
+	$q->execute();
+
 	$q = null;
 	$db = null;
 	return $rv;

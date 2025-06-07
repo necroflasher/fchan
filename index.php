@@ -4,7 +4,6 @@
 
 # ni:
 # - sage
-# - thread pururin
 # - more deletion stuff
 #   - passwords
 #   - mod deletion without password
@@ -15,7 +14,7 @@
 #   - first, prevent accidental resubmission
 #   - post cooldown (show using post confirm screen?)
 
-const FCHAN_DB = '/tmp/fchan.22.db';
+const FCHAN_DB = '/tmp/fchan.25.db';
 
 const FRONT_PUBLIC = '/fchan/';
 

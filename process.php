@@ -38,6 +38,9 @@ function process_up()
 		$_FILES["file"]["tmp_name"],
 		FILES_DIR.'/'.$fname.$fext);
 
+	foreach (db_claim_purge_files() as $t)
+		unlink(FILES_DIR.'/'.$t['fname'].$t['fext']);
+
 	echo 'Upload complete. <A href="',FRONT_PUBLIC,'">Return</A>';
 }
 

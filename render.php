@@ -154,7 +154,7 @@ function render_options()
 	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
 	echo '<HR>';
 
-	$ks = 'tno.cno.subject.name.body.fname.fext.fsize.md5.deleted';
+	$ks = 'tno.cno.subject.name.body.fname.fext.fsize.md5.deleted.fpurged';
 	echo '<TABLE border>';
 	foreach (explode('.', $ks) as $k)
 	{
