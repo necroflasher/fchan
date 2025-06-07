@@ -18,7 +18,7 @@ function render_front()
 	echo   '<TD><INPUT type="text" name="name">';
 	echo '<TR>';
 	echo   '<TH>Comment';
-	echo   '<TD><TEXTAREA name="body"></TEXTAREA>';
+	echo   '<TD><TEXTAREA name="body" rows=4 cols=40></TEXTAREA>';
 	echo '<TR>';
 	echo   '<TH>File';
 	echo   '<TD><INPUT type="file" name="file">';
@@ -130,7 +130,7 @@ function render_thread()
 	echo   '<TD><INPUT type="text" name="name">';
 	echo '<TR>';
 	echo   '<TH>Comment';
-	echo   '<TD><TEXTAREA name="body"></TEXTAREA>';
+	echo   '<TD><TEXTAREA name="body" rows=4 cols=40></TEXTAREA>';
 	echo '<TR>';
 	echo   '<TH>';
 	echo   '<TD><INPUT type="submit">';
