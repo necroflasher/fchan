@@ -48,17 +48,6 @@ function db_can_up($t)
 	return $rv;
 }
 
-function db_can_re($tno)
-{
-	$dat = db_get_front();
-	if (!is_array($dat))
-		return 'Database error.';
-	foreach ($dat as $t)
-		if ($t['no'] == $tno)
-			return '';
-	return 'The thread is expired or deleted.';
-}
-
 function db_up($t)
 {
 	if (!db_can_up($t))
@@ -91,26 +80,41 @@ function db_up($t)
 
 function db_re($t)
 {
-	if ($err = db_can_re($t['tno']))
-		return $err;
 	$db = db_open();
+
+	$db->beginTransaction();
+
 	$q = $db->prepare('
-	INSERT INTO dat (
-		cno,
-		tno, name, body)
-	VALUES (
-		(SELECT 1+COUNT(1) FROM dat WHERE tno=?),
-		?, ?, ?)
+	SELECT deleted, fpurged FROM dat
+	WHERE tno=? AND cno=1
+	');
+	$q->bindValue(1, $t['tno'], PDO::PARAM_INT);
+	$q->execute();
+	$dat = $q->fetch();
+	if (!$dat)
+		return 'Thread does not exist.';
+	if ($dat['deleted'] || $dat['fpurged'])
+		return 'Thread is expired or deleted.';
+
+	$q = $db->prepare('SELECT MAX(cno) FROM dat WHERE tno=?');
+	$q->bindValue(1, $t['tno'], PDO::PARAM_INT);
+	$q->execute();
+	$lastcom = $q->fetchColumn();
+	if ($lastcom >= 1000)
+		return 'Reply limit reached.';
+
+	$q = $db->prepare('
+	INSERT INTO dat (tno, cno, name, body)
+	VALUES (?, ?, ?, ?)
 	');
 	$q->bindValue(1, $t['tno'],  PDO::PARAM_INT);
-	$q->bindValue(2, $t['tno'],  PDO::PARAM_INT);
+	$q->bindValue(2, $lastcom+1, PDO::PARAM_INT);
 	$q->bindValue(3, $t['name'], PDO::PARAM_STR);
 	$q->bindValue(4, $t['body'], PDO::PARAM_STR);
-	$res = $q->execute();
-	$q = null;
-	$db = null;
-	if (!$res)
-		return 'Failed to insert post.';
+	$q->execute();
+
+	$db->commit();
+
 	return '';
 }
 
