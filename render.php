@@ -91,20 +91,27 @@ function render_thread()
 		if ($t['deleted'])
 		{
 			$t = [
+				'tno'  => $t['tno'],
 				'cno'  => $t['cno'],
 				'name' => 'Anonymous',
 				'body' => '<I>Post deleted.</I>',
+				'md5'  => null,
 			];
 		}
 		echo $t['cno'],': <B>';
 		echo $t['name']?$t['name']:'Anonymous';
 		echo '</B>';
+		echo ' [';
+		echo '<A href="?v=options&no=',$t['tno'],'&com=',$t['cno'],'">';
+		echo 'Options';
+		echo '</A>';
+		echo ']';
 		echo '<BLOCKQUOTE>';
 		if (!(!$i && !$t['body']))
 		{
 			echo $t['body']?$t['body']:'<I>No comment.</I>';
 		}
-		if (!$i)
+		if (!$i && $t['md5'])
 		{
 			if ($t['body'])
 				echo '<BR><BR>';
@@ -135,4 +142,45 @@ function render_thread()
 
 	echo '</BODY>';
 	echo '</HTML>';
+}
+
+function render_options()
+{
+	$tno = @strval($_GET['no']);
+	$cno = @strval($_GET['com']);
+
+	$t = db_get_comment($tno, $cno);
+
+	$t or die('Error: Post not found.');
+
+	if ($t['md5']) $t['md5'] = bin2hex($t['md5']);
+
+	echo '<TITLE>Post details @ fchan</TITLE>';
+
+	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
+	echo '<HR>';
+
+	$ks = 'tno.cno.subject.name.body.fname.fext.fsize.md5.deleted';
+	echo '<TABLE border>';
+	foreach (explode('.', $ks) as $k)
+	{
+		if (!$t[$k])
+			continue;
+		echo '<TR>';
+		echo '<TH>',$k;
+		echo '<TD>',htmlspecialchars($t[$k]);
+	}
+	echo '</TABLE>';
+
+	echo '<P>';
+
+	echo '<FORM action="',FRONT_PUBLIC,'" method="POST">';
+	echo '<INPUT type="hidden" name="p" value="del">';
+	echo '<INPUT type="hidden" name="tno" value="',$tno,'">';
+	echo '<INPUT type="hidden" name="cno" value="',$cno,'">';
+	echo '<FIELDSET>';
+	echo '<LEGEND>Delete post</LEGEND>';
+	echo '<INPUT type="submit">';
+	echo '</FIELDSET>';
+	echo '</FORM>';
 }

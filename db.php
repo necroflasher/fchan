@@ -33,7 +33,8 @@ function db_can_up($t)
 	$rv = true;
 	$db = db_open();
 	$q = $db->prepare('
-	SELECT 1 FROM dat WHERE md5=? OR (fname=? AND fext=?)
+	SELECT 1 FROM dat WHERE
+		deleted IS NULL AND (md5=? OR (fname=? AND fext=?))
 	');
 	$q->bindValue(1, $t['md5'],   PDO::PARAM_LOB);
 	$q->bindValue(2, $t['fname'], PDO::PARAM_STR);
@@ -99,6 +100,31 @@ function db_re($t)
 	return '';
 }
 
+function db_del($tno, $cno)
+{
+	# blank out any fields with user-submitted text
+	$db = db_open();
+	$q = $db->prepare("
+	UPDATE dat
+	SET
+		deleted=1,
+		subject=NULL,
+		name=NULL,
+		body=NULL,
+		fname=NULL
+	WHERE tno=? AND cno=?
+	");
+	$q->bindValue(1, $tno, PDO::PARAM_INT);
+	$q->bindValue(2, $cno, PDO::PARAM_INT);
+	$q->execute();
+	$count = $q->rowCount();
+	$q = null;
+	$db = null;
+	if (!$count)
+		return 'Post not found.';
+	return '';
+}
+
 function db_get_front()
 {
 	$db = db_open();
@@ -117,7 +143,7 @@ function db_get_front()
 			(SELECT -1+COUNT(1) FROM dat AS d WHERE d.tno=dat.tno) AS coms,
 			(SELECT MAX(rowid) FROM dat AS d WHERE d.tno=dat.tno) AS maxt
 		FROM dat
-		WHERE md5 NOT NULL
+		WHERE md5 NOT NULL AND deleted IS NULL
 		ORDER BY rowid DESC
 		LIMIT 10
 	) ORDER BY maxt DESC
@@ -149,6 +175,19 @@ function db_get_thread($no)
 	$q->bindValue(1, $no, PDO::PARAM_INT);
 	$q->execute();
 	$rv = $q->fetchAll();
+	$q = null;
+	$db = null;
+	return $rv;
+}
+
+function db_get_comment($tno, $cno)
+{
+	$db = db_open();
+	$q = $db->prepare('SELECT * FROM dat WHERE tno=? AND cno=?');
+	$q->bindValue(1, $tno, PDO::PARAM_INT);
+	$q->bindValue(2, $cno, PDO::PARAM_INT);
+	$q->execute();
+	$rv = $q->fetch();
 	$q = null;
 	$db = null;
 	return $rv;

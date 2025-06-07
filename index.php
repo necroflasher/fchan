@@ -5,9 +5,10 @@
 # ni:
 # - sage
 # - thread pururin
-# - deletion
-#   - blank out comments
-#   - threads gone from index
+# - more deletion stuff
+#   - passwords
+#   - mod deletion without password
+#   - cooldown timer
 # - file tags
 # - quote links
 # - spam protection
@@ -45,15 +46,17 @@ if (!is_dir(FILES_DIR))
 
 switch (@strval($_POST['p']))
 {
-	case 'up': process_up(); exit();
-	case 're': process_re(); exit();
+	case 'up':  process_up();  exit();
+	case 're':  process_re();  exit();
+	case 'del': process_del(); exit();
 }
 
 switch (@strval($_GET['v']))
 {
 	case '':
-	case 'index':  render_front();  exit();
-	case 'thread': render_thread(); exit();
+	case 'index':   render_front();   exit();
+	case 'options': render_options(); exit();
+	case 'thread':  render_thread();  exit();
 }
 
 http_response_code(404);

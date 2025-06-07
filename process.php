@@ -63,3 +63,20 @@ function process_re()
 
 	echo 'Post created. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">Return</A>';
 }
+
+function process_del()
+{
+	$tno = @strval($_POST['tno']);
+	$cno = @strval($_POST['cno']);
+
+	$dat = db_get_comment($tno, $cno);
+	$dat or die('Error: Post not found.');
+
+	$err = db_del($tno, $cno);
+	$err and die("Error: $err");
+
+	if ($dat['fname'])
+		unlink(FILES_DIR.'/'.$dat['fname'].$dat['fext']);
+
+	echo 'Post deleted. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">Return</A>';
+}
