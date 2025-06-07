@@ -47,6 +47,17 @@ function db_can_up($t)
 	return $rv;
 }
 
+function db_can_re($tno)
+{
+	$dat = db_get_front();
+	if (!is_array($dat))
+		return 'Database error.';
+	foreach ($dat as $t)
+		if ($t['no'] == $tno)
+			return '';
+	return 'The thread is expired or deleted.';
+}
+
 function db_up($t)
 {
 	if (!db_can_up($t))
@@ -79,6 +90,8 @@ function db_up($t)
 
 function db_re($t)
 {
+	if ($err = db_can_re($t['tno']))
+		return $err;
 	$db = db_open();
 	$q = $db->prepare('
 	INSERT INTO dat (
