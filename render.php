@@ -62,7 +62,7 @@ function render_front()
 
 function render_thread()
 {
-	$no = intval(strval(@$_GET['no']));
+	$no = userint(@$_GET['no']);
 
 	$dat = db_get_thread($no);
 
@@ -140,8 +140,8 @@ function render_thread()
 
 function render_options()
 {
-	$tno = @strval($_GET['no']);
-	$cno = @strval($_GET['com']);
+	$tno = userint(@$_GET['no']);
+	$cno = userint(@$_GET['com']);
 
 	$t = db_get_comment($tno, $cno);
 

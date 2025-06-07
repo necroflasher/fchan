@@ -45,7 +45,7 @@ function process_re()
 {
 	$nam = trim(strval(@$_POST['name']));
 	$com = trim(strval(@$_POST['body']));
-	$tno = $_POST['no'];
+	$tno = userint(@$_POST['no']);
 
 	$com or die('Error: No text entered.');
 
@@ -66,8 +66,8 @@ function process_re()
 
 function process_del()
 {
-	$tno = @strval($_POST['tno']);
-	$cno = @strval($_POST['cno']);
+	$tno = userint(@$_POST['tno']);
+	$cno = userint(@$_POST['cno']);
 
 	$dat = db_get_comment($tno, $cno);
 	$dat or die('Error: Post not found.');
