@@ -2,8 +2,7 @@
 
 function db_firstrun()
 {
-	$db = new SQLite3(FCHAN_DB, SQLITE3_OPEN_READWRITE|SQLITE3_OPEN_CREATE);
-	$db->enableExceptions(true);
+	$db = new PDO('sqlite:'.FCHAN_DB);
 	$db->exec('PRAGMA journal_mode=WAL');
 	$db->exec("
 	CREATE TABLE dat (
@@ -19,12 +18,12 @@ function db_firstrun()
 		deleted INTEGER
 	) STRICT
 	");
-	$db->close();
+	$db = null;
 }
 
 function db_open()
 {
-	$db = new SQLite3(FCHAN_DB, SQLITE3_OPEN_READWRITE|SQLITE3_OPEN_CREATE);
+	$db = new PDO('sqlite:'.FCHAN_DB);
 	$db->exec('PRAGMA journal_mode=WAL');
 	return $db;
 }
@@ -36,14 +35,14 @@ function db_can_up($t)
 	$q = $db->prepare('
 	SELECT 1 FROM dat WHERE md5=? OR (fname=? AND fext=?)
 	');
-	$q->bindValue(1, $t['md5'],   SQLITE3_BLOB);
-	$q->bindValue(2, $t['fname'], SQLITE3_TEXT);
-	$q->bindValue(3, $t['fext'],  SQLITE3_TEXT);
-	$res = $q->execute();
-	if ($res && $res->numColumns() && $res->fetchArray(SQLITE3_NUM))
+	$q->bindValue(1, $t['md5'],   PDO::PARAM_LOB);
+	$q->bindValue(2, $t['fname'], PDO::PARAM_STR);
+	$q->bindValue(3, $t['fext'],  PDO::PARAM_STR);
+	$q->execute();
+	if ($q->fetchColumn())
 		$rv = false;
-	$q->close();
-	$db->close();
+	$q = null;
+	$db = null;
 	return $rv;
 }
 
@@ -62,16 +61,16 @@ function db_up($t)
 		1,
 		?, ?, ?, ?, ?, ?, ?)
 	');
-	$q->bindValue(1, $t['sub'],   SQLITE3_TEXT);
-	$q->bindValue(2, $t['nam'],   SQLITE3_TEXT);
-	$q->bindValue(3, $t['com'],   SQLITE3_TEXT);
-	$q->bindValue(4, $t['md5'],   SQLITE3_BLOB);
-	$q->bindValue(5, $t['fname'], SQLITE3_TEXT);
-	$q->bindValue(6, $t['fext'],  SQLITE3_TEXT);
-	$q->bindValue(7, $t['fsize'], SQLITE3_INTEGER);
+	$q->bindValue(1, $t['sub'],   PDO::PARAM_STR);
+	$q->bindValue(2, $t['nam'],   PDO::PARAM_STR);
+	$q->bindValue(3, $t['com'],   PDO::PARAM_STR);
+	$q->bindValue(4, $t['md5'],   PDO::PARAM_LOB);
+	$q->bindValue(5, $t['fname'], PDO::PARAM_STR);
+	$q->bindValue(6, $t['fext'],  PDO::PARAM_STR);
+	$q->bindValue(7, $t['fsize'], PDO::PARAM_INT);
 	$res = $q->execute();
-	$q->close();
-	$db->close();
+	$q = null;
+	$db = null;
 	if (!$res)
 		return 'Failed to insert post.';
 	return '';
@@ -88,13 +87,13 @@ function db_re($t)
 		(SELECT 1+COUNT(1) FROM dat WHERE tno=?),
 		?, ?, ?)
 	');
-	$q->bindValue(1, $t['tno'],  SQLITE3_INTEGER);
-	$q->bindValue(2, $t['tno'],  SQLITE3_INTEGER);
-	$q->bindValue(3, $t['name'], SQLITE3_TEXT);
-	$q->bindValue(4, $t['body'], SQLITE3_TEXT);
+	$q->bindValue(1, $t['tno'],  PDO::PARAM_INT);
+	$q->bindValue(2, $t['tno'],  PDO::PARAM_INT);
+	$q->bindValue(3, $t['name'], PDO::PARAM_STR);
+	$q->bindValue(4, $t['body'], PDO::PARAM_STR);
 	$res = $q->execute();
-	$q->close();
-	$db->close();
+	$q = null;
+	$db = null;
 	if (!$res)
 		return 'Failed to insert post.';
 	return '';
@@ -102,7 +101,6 @@ function db_re($t)
 
 function db_get_front()
 {
-	$rv = [];
 	$db = db_open();
 	# the shitty nested thing is to apply the bump order sort after
 	# rowid sort plus limit
@@ -124,18 +122,15 @@ function db_get_front()
 		LIMIT 10
 	) ORDER BY maxt DESC
 	');
-	$res = $q->execute();
-	if ($res->numColumns())
-		while ($row = $res->fetchArray(SQLITE3_ASSOC))
-			$rv[] = $row;
-	$q->close();
-	$db->close();
+	$q->execute();
+	$rv = $q->fetchAll();
+	$q = null;
+	$db = null;
 	return $rv;
 }
 
 function db_get_thread($no)
 {
-	$rv = [];
 	$db = db_open();
 	$q = $db->prepare('
 	SELECT
@@ -151,12 +146,10 @@ function db_get_thread($no)
 	FROM dat
 	WHERE tno=?
 	');
-	$q->bindValue(1, $no, SQLITE3_INTEGER);
-	$res = $q->execute();
-	if ($res->numColumns())
-		while ($row = $res->fetchArray(SQLITE3_ASSOC))
-			$rv[] = $row;
-	$q->close();
-	$db->close();
+	$q->bindValue(1, $no, PDO::PARAM_INT);
+	$q->execute();
+	$rv = $q->fetchAll();
+	$q = null;
+	$db = null;
 	return $rv;
 }
