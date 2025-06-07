@@ -38,6 +38,10 @@ if (!file_exists(FCHAN_DB))
 {
 	db_firstrun();
 }
+if (!is_dir(FILES_DIR))
+{
+	mkdir(FILES_DIR) or die;
+}
 
 switch (strval(@$_POST['p']))
 {
