@@ -43,13 +43,13 @@ if (!is_dir(FILES_DIR))
 	mkdir(FILES_DIR) or die;
 }
 
-switch (strval(@$_POST['p']))
+switch (@strval($_POST['p']))
 {
 	case 'up': process_up(); exit();
 	case 're': process_re(); exit();
 }
 
-switch (strval(@$_GET['v']))
+switch (@strval($_GET['v']))
 {
 	case '':
 	case 'index':  render_front();  exit();
