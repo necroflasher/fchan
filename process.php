@@ -86,7 +86,7 @@ function process_re()
 	], $cno);
 	$err and html_die(400, "Error: $err");
 
-	html_die(200, 'Post created. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'#c',$cno,'">View</A>');
+	html_die(200, 'Post created. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'&_=',time(),'#c',$cno,'">View</A>');
 }
 
 function process_del()
@@ -102,5 +102,5 @@ function process_del()
 	if ($dat['fname'])
 		unlink(FILES_DIR.'/'.$dat['fname'].$dat['fext']);
 
-	html_die(200, 'Post deleted. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'#c',$cno,'">Return</A>');
+	html_die(200, 'Post deleted. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'&_=',time(),'#c',$cno,'">Return</A>');
 }
