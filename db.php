@@ -36,7 +36,7 @@ function db_open()
 	return $db;
 }
 
-function db_up($t)
+function db_up($t, &$fpurge_dat_out)
 {
 	$db = db_open();
 
@@ -75,6 +75,26 @@ function db_up($t)
 	$q->bindValue(6, $t['fname'],   PDO::PARAM_STR);
 	$q->bindValue(7, $t['fext'],    PDO::PARAM_STR);
 	$q->bindValue(8, $t['fsize'],   PDO::PARAM_INT);
+	$q->execute();
+
+	$q = $db->prepare('
+	SELECT fname, fext FROM dat
+	WHERE cno=1 AND fpurged IS NULL
+	ORDER BY tno DESC
+	LIMIT -1 OFFSET 10
+	');
+	$q->execute();
+	$fpurge_dat_out = $q->fetchAll();
+
+	$q = $db->prepare('
+	UPDATE dat
+	SET fpurged=1
+	WHERE cno=1 AND tno IN (
+		SELECT tno FROM dat
+		WHERE cno=1 AND fpurged IS NULL
+		ORDER BY tno DESC
+		LIMIT -1 OFFSET 10)
+	');
 	$q->execute();
 
 	$db->commit();
@@ -176,39 +196,6 @@ function db_get_front()
 	');
 	$q->execute();
 	return $q->fetchAll();
-}
-
-# call after inserting a new thread
-# returns threads whose file must be deleted
-function db_claim_purge_files()
-{
-	$db = db_open();
-
-	$db->beginTransaction();
-
-	$q = $db->prepare('
-	SELECT fname, fext FROM dat
-	WHERE cno=1 AND fpurged IS NULL
-	ORDER BY tno DESC
-	LIMIT -1 OFFSET 10
-	');
-	$q->execute();
-	$dat = $q->fetchAll();
-
-	$q = $db->prepare('
-	UPDATE dat
-	SET fpurged=1
-	WHERE cno=1 AND tno IN (
-		SELECT tno FROM dat
-		WHERE cno=1 AND fpurged IS NULL
-		ORDER BY tno DESC
-		LIMIT -1 OFFSET 10)
-	');
-	$q->execute();
-
-	$db->commit();
-
-	return $dat;
 }
 
 function db_get_thread($tno)

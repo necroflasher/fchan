@@ -38,6 +38,7 @@ function process_up()
 	$body = htmlspecialchars($body);
 	$body = preg_replace('/\n/', '<BR>', $body);
 
+	$fpurge_dat = null;
 	$err = db_up([
 		'subject' => htmlspecialchars($subject),
 		'name'    => htmlspecialchars($name),
@@ -46,16 +47,14 @@ function process_up()
 		'fname'   => $fname,
 		'fext'    => $fext,
 		'fsize'   => $fsize,
-	]);
+	], $fpurge_dat);
 
 	$err and die("Error: $err");
 
-	move_uploaded_file(
-		$_FILES["file"]["tmp_name"],
-		FILES_DIR.'/'.$fname.$fext);
+	move_uploaded_file($tmpfile, FILES_DIR.'/'.$fname.$fext);
 
-	foreach (db_claim_purge_files() as $t)
-		unlink(FILES_DIR.'/'.$t['fname'].$t['fext']);
+	foreach ($fpurge_dat as $dat)
+		unlink(FILES_DIR.'/'.$dat['fname'].$dat['fext']);
 
 	echo 'Upload complete. <A href="',FRONT_PUBLIC,'">Return</A>';
 }
