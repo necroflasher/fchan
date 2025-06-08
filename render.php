@@ -148,13 +148,14 @@ function render_options()
 	$t or die('Error: Post not found.');
 
 	if ($t['md5']) $t['md5'] = bin2hex($t['md5']);
+	$t['time'] = date('Y-m-d H:i:s', $t['time']);
 
 	echo '<TITLE>Post details @ fchan</TITLE>';
 
 	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
 	echo '<HR>';
 
-	$ks = 'tno.cno.subject.name.body.fname.fext.fsize.md5.deleted.fpurged';
+	$ks = 'tno.cno.time.subject.name.body.fname.fext.fsize.md5.deleted.fpurged';
 	echo '<TABLE border>';
 	foreach (explode('.', $ks) as $k)
 	{

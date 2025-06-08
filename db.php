@@ -6,8 +6,9 @@ function db_firstrun()
 	$db->exec('PRAGMA journal_mode=WAL');
 	$db->exec("
 	CREATE TABLE dat (
-		tno     INTEGER,
-		cno     INTEGER,
+		tno     INTEGER NOT NULL CHECK(tno>=1),
+		cno     INTEGER NOT NULL CHECK(cno>=1),
+		time    INTEGER NOT NULL,
 		subject TEXT,
 		name    TEXT,
 		body    TEXT,
@@ -19,6 +20,12 @@ function db_firstrun()
 		fpurged INTEGER
 	) STRICT
 	");
+	$db->exec('
+	CREATE UNIQUE INDEX dat_tno_cno ON dat(tno, cno)
+	');
+	$db->exec('
+	CREATE UNIQUE INDEX dat_tno ON dat(tno) WHERE cno=1
+	');
 	$db = null;
 }
 
@@ -55,9 +62,9 @@ function db_up($t)
 	$lastup = $q->fetchColumn();
 
 	$q = $db->prepare('
-	INSERT INTO dat (tno, cno,
+	INSERT INTO dat (tno, cno, time,
 		subject, name, body, md5, fname, fext, fsize)
-	VALUES (?, 1,
+	VALUES (?, 1, UNIXEPOCH(),
 		?, ?, ?, ?, ?, ?, ?)
 	');
 	$q->bindValue(1, $lastup+1,     PDO::PARAM_STR);
@@ -101,8 +108,8 @@ function db_re($t)
 		return 'Reply limit reached.';
 
 	$q = $db->prepare('
-	INSERT INTO dat (tno, cno, name, body)
-	VALUES (?, ?, ?, ?)
+	INSERT INTO dat (tno, cno, time, name, body)
+	VALUES (?, ?, UNIXEPOCH(), ?, ?)
 	');
 	$q->bindValue(1, $t['tno'],  PDO::PARAM_INT);
 	$q->bindValue(2, $lastcom+1, PDO::PARAM_INT);
