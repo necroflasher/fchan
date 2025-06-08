@@ -16,7 +16,9 @@ function process_up()
 	$fext  = '.'.pathinfo($_FILES["file"]["name"], PATHINFO_EXTENSION);
 	$fsize = $_FILES["file"]["size"];
 
-	preg_match('/^[^.\/][^\/]{0,126}$/', $fname) or die('Error: Bad filename.');
+	$err = userfilename($fname);
+	$err and die("Error: Bad filename. ($err)");
+
 	@EXTS[$fext] or die('Error: Unsupported filetype.');
 
 	$com = htmlspecialchars($com);
