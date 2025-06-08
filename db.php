@@ -1,9 +1,18 @@
 <?PHP
 
-function db_firstrun()
+function db_open()
 {
 	$db = new PDO('sqlite:'.FCHAN_DB);
+	$db->exec('PRAGMA busy_timeout=5000');
 	$db->exec('PRAGMA journal_mode=WAL');
+	$db->exec('PRAGMA synchronous=NORMAL');
+	$db->exec('PRAGMA temp_store=MEMORY');
+	return $db;
+}
+
+function db_firstrun()
+{
+	$db = db_open();
 	$db->exec("
 	CREATE TABLE dat (
 		tno     INTEGER NOT NULL CHECK(tno>=1),
@@ -27,14 +36,9 @@ function db_firstrun()
 	$db->exec('
 	CREATE UNIQUE INDEX dat_tno ON dat(tno) WHERE cno=1
 	');
-	$db = null;
-}
-
-function db_open()
-{
-	$db = new PDO('sqlite:'.FCHAN_DB);
-	$db->exec('PRAGMA journal_mode=WAL');
-	return $db;
+	$db->exec('
+	CREATE INDEX dat_alive ON dat(tno) WHERE cno=1 AND fpurged IS NULL
+	');
 }
 
 function db_up($t, &$fpurge_dat_out)
