@@ -48,7 +48,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$pass = $t['pass'];
 	if ($pass === '')
 		$pass = bin2hex(random_bytes(16));
-	$hash = password_hash($pass, PASSWORD_BCRYPT);
+	$hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 8]);
 
 	$db->beginTransaction();
 
@@ -123,7 +123,7 @@ function db_re($t, &$cno_out)
 	$pass = $t['pass'];
 	if ($pass === '')
 		$pass = bin2hex(random_bytes(16));
-	$hash = password_hash($pass, PASSWORD_BCRYPT);
+	$hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 8]);
 
 	$db->beginTransaction();
 
