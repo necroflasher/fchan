@@ -122,10 +122,25 @@ function db_re($t)
 	return '';
 }
 
-function db_del($tno, $cno)
+function db_del($tno, $cno, &$dat_out)
 {
-	# blank out any fields with user-submitted text
 	$db = db_open();
+
+	$db->beginTransaction();
+
+	$q = $db->prepare("
+	SELECT * FROM dat WHERE tno=? AND cno=?
+	");
+	$q->bindValue(1, $tno, PDO::PARAM_INT);
+	$q->bindValue(2, $cno, PDO::PARAM_INT);
+	$q->execute();
+	$dat = $q->fetch();
+	if (!$dat)
+		return 'Post not found.';
+	if ($dat['deleted'])
+		return 'Post has already been deleted.';
+	$dat_out = $dat;
+
 	$q = $db->prepare("
 	UPDATE dat
 	SET
@@ -140,8 +155,9 @@ function db_del($tno, $cno)
 	$q->bindValue(1, $tno, PDO::PARAM_INT);
 	$q->bindValue(2, $cno, PDO::PARAM_INT);
 	$q->execute();
-	if (!$q->rowCount())
-		return 'Post not found.';
+
+	$db->commit();
+
 	return '';
 }
 

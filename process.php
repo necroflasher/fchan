@@ -72,10 +72,8 @@ function process_del()
 	$tno = userint(@$_POST['tno']);
 	$cno = userint(@$_POST['cno']);
 
-	$dat = db_get_comment($tno, $cno);
-	$dat or die('Error: Post not found.');
-
-	$err = db_del($tno, $cno);
+	$dat = null;
+	$err = db_del($tno, $cno, $dat);
 	$err and die("Error: $err");
 
 	if ($dat['fname'])
