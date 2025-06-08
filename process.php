@@ -61,20 +61,19 @@ function process_up()
 
 function process_re()
 {
-	$nam = trim(strval(@$_POST['name']));
-	$com = trim(strval(@$_POST['body']));
-	$tno = userint(@$_POST['no']);
+	$name = trim(userstr(@$_POST['name']));
+	$body = trim(userstr(@$_POST['body']));
+	$tno  = userint(@$_POST['no']);
 
-	$com or die('Error: No text entered.');
+	$body or die('Error: No text entered.');
 
-	$nam = htmlspecialchars($nam);
-	$com = htmlspecialchars($com);
-	$com = preg_replace('/\n/', '<BR>', $com);
+	$body = htmlspecialchars($body);
+	$body = preg_replace('/\n/', '<BR>', $body);
 
 	$err = db_re([
 		'tno'  => $tno,
-		'name' => $nam,
-		'body' => $com,
+		'name' => htmlspecialchars($name),
+		'body' => $body,
 	]);
 
 	$err and die("Error: $err");
