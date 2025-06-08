@@ -47,7 +47,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	$pass = $t['pass'];
 	if ($pass === '')
-		$pass = random_bytes(16);
+		$pass = bin2hex(random_bytes(16));
 	$hash = password_hash($pass, PASSWORD_BCRYPT);
 
 	$db->beginTransaction();
@@ -122,7 +122,7 @@ function db_re($t, &$cno_out)
 
 	$pass = $t['pass'];
 	if ($pass === '')
-		$pass = random_bytes(16);
+		$pass = bin2hex(random_bytes(16));
 	$hash = password_hash($pass, PASSWORD_BCRYPT);
 
 	$db->beginTransaction();
