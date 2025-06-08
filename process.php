@@ -52,6 +52,12 @@ function process_up()
 		'pass'    => $pass,
 	], $tno, $fpurge_dat);
 
+	if ($err === 'File exists.')
+	{
+		echo 'Error: File exists. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">View</A>';
+		die;
+	}
+
 	$err and die("Error: $err");
 
 	move_uploaded_file($tmpfile, FILES_DIR.'/'.$fname.$fext);

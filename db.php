@@ -53,7 +53,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$db->beginTransaction();
 
 	$q = $db->prepare('
-	SELECT 1 FROM dat WHERE
+	SELECT tno FROM dat WHERE
 		cno=1 AND
 		fpurged IS NULL AND
 		(md5=? OR (fname=? AND fext=?))
@@ -62,7 +62,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->bindValue(2, $t['fname'], PDO::PARAM_STR);
 	$q->bindValue(3, $t['fext'],  PDO::PARAM_STR);
 	$q->execute();
-	if ($q->fetchColumn())
+	if ($tno_out = $q->fetchColumn())
 		return 'File exists.';
 
 	$q = $db->prepare('
