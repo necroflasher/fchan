@@ -41,8 +41,8 @@ function process_up()
 
 	$fpurge_dat = null;
 	$err = db_up([
-		'subject' => htmlspecialchars($subject),
-		'name'    => htmlspecialchars($name),
+		'subject' => $subject,
+		'name'    => $name,
 		'body'    => $body,
 		'md5'     => $md5,
 		'fname'   => $fname,
@@ -75,7 +75,7 @@ function process_re()
 
 	$err = db_re([
 		'tno'  => $tno,
-		'name' => htmlspecialchars($name),
+		'name' => $name,
 		'body' => $body,
 		'pass' => $pass,
 	]);

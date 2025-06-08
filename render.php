@@ -4,6 +4,10 @@ function render_front()
 {
 	echo '<TITLE>fchan</TITLE>';
 
+	echo '<STYLE type="text/css"><!--';
+	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
+	echo '--></STYLE>';
+
 	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
 	echo '<HR>';
 
@@ -43,78 +47,128 @@ function render_front()
 	echo '<TH>';
 	foreach (db_get_front() as $t)
 	{
-		$ftext = '<SPAN dir="auto" lang>'.htmlspecialchars($t['fname']).'</SPAN>'.$t['fext'];
-		if (mb_strlen($t['fname']) > 20)
+		$nametitle = '';
+		if (!$t['name'])
+			$nametext = 'Anonymous';
+		else if (mb_strlen($t['name']) <= 20)
+			$nametext = htmlspecialchars($t['name']);
+		else
+		{
+			$nametext = htmlspecialchars(mb_substr($t['name'], 0, 20)).'(...)';
+			$nametitle = ' title="'.htmlspecialchars($t['name']).'"';
+		}
+
+		$subjtitle = '';
+		if (mb_strlen($t['subject']) <= 20)
+			$subjtext = htmlspecialchars($t['subject']);
+		else
+		{
+			$subjtext = htmlspecialchars(mb_substr($t['subject'], 0, 20)).'(...)';
+			$subjtitle = ' title="'.htmlspecialchars($t['subject']).'"';
+		}
+
+		$ftitle = '';
+		if (mb_strlen($t['fname']) <= 20)
+			$ftext = '<SPAN dir="auto" lang>'.htmlspecialchars($t['fname']).'</SPAN>'.$t['fext'];
+		else
+		{
 			$ftext = '<SPAN dir="auto" lang>'.htmlspecialchars(mb_substr($t['fname'], 0, 20)).'(...)'.'</SPAN>'.$t['fext'];
+			$ftitle = ' title="'.htmlspecialchars($t['fname']).'"';
+		}
 
 		echo '<TR>';
-		echo '<TD align="right">',$t['tno'];
-		echo '<TD dir="auto" lang><B>',$t['name']?$t['name']:'Anonymous','</B>';
+		echo '<TD align="right">';
+		echo   $t['tno'];
+		echo '<TD dir="auto" lang class="wrap">';
+		echo   '<B',$nametitle,'>';
+		echo   $nametext;
+		echo   '</B>';
 		echo '<TD dir="auto" lang><A';
-		echo ' href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'"';
-		echo ' title="',htmlspecialchars($t['fname']),'"';
-		echo '>',$ftext,'</A>';
-		echo '<TD dir="auto" lang><B>',$t['subject'],'</B>';
-		echo '<TD>',format_fs($t['fsize']);
-		echo '<TD>',$t['coms'];
-		echo '<TD>[ <A href="?v=thread&no=',$t['tno'],'">Reply</A> ]';
+		echo   ' href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'"';
+		echo   ' data-md5="',bin2hex($t['md5']),'"';
+		echo   ' data-size="',$t['fsize'],'"';
+		echo   $ftitle;
+		echo   '>',$ftext,'</A>';
+		echo '<TD dir="auto" lang class="wrap">';
+		echo   '<B',$subjtitle,'>';
+		echo   $subjtext;
+		echo   '</B>';
+		echo '<TD>';
+		echo   '<SPAN title="',$t['fsize'],' bytes">';
+		echo   format_fs($t['fsize']);
+		echo   '</SPAN>';
+		echo '<TD align="right">';
+		echo   $t['coms'];
+		echo '<TD>';
+		echo   '<A href="?v=thread&no=',$t['tno'],'">Reply</A>';
 	}
 	echo '</TABLE>';
 }
 
 function render_thread()
 {
-	$no = userint(@$_GET['no']);
+	$tno = userint(@$_GET['no']);
 
-	$dat = db_get_thread($no);
+	$dat = db_get_thread($tno);
 
-	if (!$dat)
-	{
-		http_response_code(404);
-		die();
-	}
+	$dat or die('Error: Thread not found.');
 
-	echo '<TITLE>No. ',$no,' @ fchan</TITLE>';
+	echo '<TITLE>No. ',$tno,' @ fchan</TITLE>';
+
+	echo '<STYLE type="text/css"><!--';
+	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
+	echo '--></STYLE>';
 
 	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
 	echo '<HR>';
 
 	if ($dat[0]['subject'])
 	{
-		echo '<FONT size="+1"><B dir="auto" lang>',$dat[0]['subject'],'</B> (',$no,')</FONT><BR>';
+		echo '<FONT size="+1">';
+		echo '<B dir="auto" lang class="wrap">';
+		echo htmlspecialchars($dat[0]['subject']);
+		echo '</B>';
+		echo ' (',$tno,')';
+		echo '</FONT>';
 		echo '<HR>';
 	}
 
-	foreach ($dat as $i => $t)
+	$delpost = [
+		'name' => 'Anonymous',
+		'body' => '<I>Post deleted.</I>',
+		'md5'  => null,
+	];
+	foreach ($dat as $t)
 	{
+		$cno = $t['cno'];
+
 		if ($t['deleted'])
-		{
-			$t = [
-				'tno'  => $t['tno'],
-				'cno'  => $t['cno'],
-				'name' => 'Anonymous',
-				'body' => '<I>Post deleted.</I>',
-				'md5'  => null,
-			];
-		}
-		echo $t['cno'],': <B dir="auto" lang>';
-		echo $t['name']?$t['name']:'Anonymous';
+			$t = $delpost;
+
+		echo $cno;
+		echo ': ';
+		echo '<B dir="auto" lang class="wrap" id="c',$cno,'">';
+		echo $t['name']?htmlspecialchars($t['name']):'Anonymous';
 		echo '</B>';
+
 		echo ' [';
-		echo '<A href="?v=options&no=',$t['tno'],'&com=',$t['cno'],'">';
+		echo '<A href="?v=options&no=',$tno,'&com=',$cno,'">';
 		echo 'Options';
 		echo '</A>';
 		echo ']';
-		echo '<BLOCKQUOTE dir="auto" lang>';
-		if (!(!$i && !$t['body']))
-		{
-			echo $t['body']?$t['body']:'<I>No comment.</I>';
-		}
-		if (!$i && $t['md5'])
+
+		echo '<BLOCKQUOTE dir="auto" lang class="wrap">';
+		if ($t['body'])
+			echo $t['body'];
+		if ($t['md5'])
 		{
 			if ($t['body'])
 				echo '<BR><BR>';
-			echo '<A href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'">';
+			echo '<A';
+			echo ' href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'"';
+			echo ' data-md5="',bin2hex($t['md5']),'"';
+			echo ' data-size="',$t['fsize'],'"';
+			echo '>';
 			echo '<SPAN dir="auto" lang>',htmlspecialchars($t['fname']),'</SPAN>',$t['fext'];
 			echo '</A>';
 			
@@ -125,7 +179,7 @@ function render_thread()
 
 	echo '<FORM action="',FRONT_PUBLIC,'" method="POST">';
 	echo '<INPUT type="hidden" name="p" value="re">';
-	echo '<INPUT type="hidden" name="no" value="',$no,'">';
+	echo '<INPUT type="hidden" name="no" value="',$tno,'">';
 	echo '<TABLE border>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="name">Name</LABEL>';
@@ -157,6 +211,10 @@ function render_options()
 
 	echo '<TITLE>Post details @ fchan</TITLE>';
 
+	echo '<STYLE type="text/css"><!--';
+	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
+	echo '--></STYLE>';
+
 	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
 	echo '<HR>';
 
@@ -168,7 +226,7 @@ function render_options()
 			continue;
 		echo '<TR>';
 		echo '<TH>',$k;
-		echo '<TD dir="auto" lang>',htmlspecialchars($t[$k]);
+		echo '<TD dir="auto" lang class="wrap">',htmlspecialchars($t[$k]);
 	}
 	echo '</TABLE>';
 
