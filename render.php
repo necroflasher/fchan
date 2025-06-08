@@ -2,14 +2,11 @@
 
 function render_front()
 {
-	echo '<TITLE>fchan</TITLE>';
+	html_start(200, 'fchan');
 
 	echo '<STYLE type="text/css"><!--';
 	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
 	echo '--></STYLE>';
-
-	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
-	echo '<HR>';
 
 	echo '<FORM action="',FRONT_PUBLIC,'" method="POST" enctype="multipart/form-data">';
 	echo '<INPUT type="hidden" name="p" value="up">';
@@ -103,6 +100,8 @@ function render_front()
 		echo   '<A href="?v=thread&no=',$t['tno'],'">Reply</A>';
 	}
 	echo '</TABLE>';
+
+	html_end();
 }
 
 function render_thread()
@@ -111,16 +110,13 @@ function render_thread()
 
 	$dat = db_get_thread($tno);
 
-	$dat or die('Error: Thread not found.');
+	$dat or html_die(404, 'Error: Thread not found.');
 
-	echo '<TITLE>No. ',$tno,' @ fchan</TITLE>';
+	html_start(200, 'No. ',$tno,' @ fchan');
 
 	echo '<STYLE type="text/css"><!--';
 	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
 	echo '--></STYLE>';
-
-	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
-	echo '<HR>';
 
 	echo '<FONT size="+1">';
 	echo '<B dir="auto" lang class="wrap">';
@@ -192,6 +188,8 @@ function render_thread()
 	echo   '<TD><INPUT type="submit">';
 	echo '</TABLE>';
 	echo '</FORM>';
+
+	html_end();
 }
 
 function render_options()
@@ -201,19 +199,16 @@ function render_options()
 
 	$t = db_get_comment($tno, $cno);
 
-	$t or die('Error: Post not found.');
+	$t or html_die(404, 'Error: Post not found.');
 
 	if ($t['md5']) $t['md5'] = bin2hex($t['md5']);
 	$t['time'] = date('Y-m-d H:i:s', $t['time']);
 
-	echo '<TITLE>Post details @ fchan</TITLE>';
+	html_start(200, 'Post details @ fchan');
 
 	echo '<STYLE type="text/css"><!--';
 	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
 	echo '--></STYLE>';
-
-	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
-	echo '<HR>';
 
 	$ks = 'tno.cno.time.subject.name.body.fname.fext.fsize.md5.deleted.fpurged';
 	echo '<TABLE border>';
@@ -245,4 +240,6 @@ function render_options()
 	echo '</TABLE>';
 	echo '</FIELDSET>';
 	echo '</FORM>';
+
+	html_end();
 }

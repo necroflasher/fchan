@@ -1,5 +1,39 @@
 <?PHP
 
+function html_start($status, ...$title)
+{
+	http_response_code($status);
+	echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"';
+	echo ' "http://www.w3.org/TR/REC-html40/loose.dtd">';
+	echo '<HTML lang="en">';
+	echo '<HEAD>';
+	echo   '<META http-equiv="Content-Type" content="text/html; charset=UTF-8">';
+	echo   '<TITLE>';
+	foreach ($title as $h) echo htmlspecialchars($h);
+	echo   '</TITLE>';
+	echo   '<META name="color-scheme" content="light dark">';
+	echo   '<META name="viewport" content="width=device-width">';
+	echo '</HEAD>';
+	echo '<BODY>';
+	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
+	echo '<HR>';
+}
+
+function html_end()
+{
+	echo '<HR>';
+	echo '</BODY>';
+	echo '</HTML>';
+}
+
+function html_die($status, ...$html)
+{
+	html_start($status, ($status === 200) ? 'fchan' : 'error @ fchan');
+	foreach ($html as $h) echo $h;
+	html_end();
+	die();
+}
+
 function userstr($s)
 {
 	if (!is_string($s))

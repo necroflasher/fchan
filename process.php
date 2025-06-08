@@ -9,7 +9,7 @@ function process_up()
 	$body    = trim(userstr(@$_POST['body']));
 	$pass    = userstr(@$_POST['pass']);
 
-	$subject or $body or die('Error: Subject or comment required.');
+	$subject or $body or html_die(400, 'Error: Subject or comment required.');
 
 	# file fields
 
@@ -18,9 +18,9 @@ function process_up()
 	$fsize     = @$_FILES["file"]["size"];
 	$md5       = null;
 
-	$fname_raw and $tmpfile   or die('Error: No file.');
-	$fsize                    or die('Error: Empty file.');
-	!$_FILES["file"]["error"] or die('Error: Upload failed.');
+	$fname_raw and $tmpfile   or html_die(400, 'Error: No file.');
+	$fsize                    or html_die(400, 'Error: Empty file.');
+	!$_FILES["file"]["error"] or html_die(400, 'Error: Upload failed.');
 
 	# file derived
 
@@ -28,9 +28,9 @@ function process_up()
 	$fext  = '.'.pathinfo($fname_raw, PATHINFO_EXTENSION);
 
 	$err = userfilename($fname);
-	$err and die("Error: Bad filename. ($err)");
+	$err and html_die(400, "Error: Bad filename. ($err)");
 
-	@EXTS[$fext] or die('Error: Unsupported filetype.');
+	@EXTS[$fext] or html_die(400, 'Error: Unsupported filetype.');
 
 	# final stuff
 
@@ -53,19 +53,16 @@ function process_up()
 	], $tno, $fpurge_dat);
 
 	if ($err === 'File exists.')
-	{
-		echo 'Error: File exists. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">View</A>';
-		die;
-	}
+		html_die(400, 'Error: File exists. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">View</A>');
 
-	$err and die("Error: $err");
+	$err and html_die(400, "Error: $err");
 
 	move_uploaded_file($tmpfile, FILES_DIR.'/'.$fname.$fext);
 
 	foreach ($fpurge_dat as $dat)
 		unlink(FILES_DIR.'/'.$dat['fname'].$dat['fext']);
 
-	echo 'Upload complete. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">View</A>';
+	html_die(200, 'Upload complete. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">View</A>');
 }
 
 function process_re()
@@ -75,7 +72,7 @@ function process_re()
 	$pass = userstr(@$_POST['pass']);
 	$tno  = userint(@$_POST['no']);
 
-	$body or die('Error: No text entered.');
+	$body or html_die(400, 'Error: No text entered.');
 
 	$body = htmlspecialchars($body);
 	$body = preg_replace('/\n/', '<BR>', $body);
@@ -87,9 +84,9 @@ function process_re()
 		'body' => $body,
 		'pass' => $pass,
 	], $cno);
-	$err and die("Error: $err");
+	$err and html_die(400, "Error: $err");
 
-	echo 'Post created. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'#c',$cno,'">View</A>';
+	html_die(200, 'Post created. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'#c',$cno,'">View</A>');
 }
 
 function process_del()
@@ -100,10 +97,10 @@ function process_del()
 
 	$dat = null;
 	$err = db_del($tno, $cno, $pass, $dat);
-	$err and die("Error: $err");
+	$err and html_die(400, "Error: $err");
 
 	if ($dat['fname'])
 		unlink(FILES_DIR.'/'.$dat['fname'].$dat['fext']);
 
-	echo 'Post deleted. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'#c',$cno,'">Return</A>';
+	html_die(200, 'Post deleted. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'#c',$cno,'">Return</A>');
 }
