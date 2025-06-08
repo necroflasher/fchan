@@ -3,16 +3,17 @@
 # now's the critical period when you're 2 steps from overengineering it
 
 # ni:
-# - sage
 # - more deletion stuff
 #   - passwords
 #   - mod deletion without password
 #   - cooldown timer
 # - file tags
-# - quote links
 # - spam protection
 #   - first, prevent accidental resubmission
 #   - post cooldown (show using post confirm screen?)
+# eh who cares:
+# - sage
+# - quote links
 
 const FCHAN_DB = '/tmp/fchan.25.db';
 

@@ -46,7 +46,7 @@ function render_front()
 			$ftext = htmlspecialchars(mb_substr($t['fname'], 0, 20)).'(...)'.$t['fext'];
 
 		echo '<TR>';
-		echo '<TD align="right">',$t['no'];
+		echo '<TD align="right">',$t['tno'];
 		echo '<TD><B>',$t['name']?$t['name']:'Anonymous','</B>';
 		echo '<TD><A';
 		echo ' href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'"';
@@ -55,7 +55,7 @@ function render_front()
 		echo '<TD><B>',$t['subject'],'</B>';
 		echo '<TD>',format_fs($t['fsize']);
 		echo '<TD>',$t['coms'];
-		echo '<TD>[ <A href="?v=thread&no=',$t['no'],'">Reply</A> ]';
+		echo '<TD>[ <A href="?v=thread&no=',$t['tno'],'">Reply</A> ]';
 	}
 	echo '</TABLE>';
 }

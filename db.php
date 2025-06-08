@@ -29,52 +29,49 @@ function db_open()
 	return $db;
 }
 
-function db_can_up($t)
+function db_up($t)
 {
-	$rv = true;
 	$db = db_open();
+
+	$db->beginTransaction();
+
 	$q = $db->prepare('
 	SELECT 1 FROM dat WHERE
-		deleted IS NULL AND (md5=? OR (fname=? AND fext=?))
+		cno=1 AND
+		fpurged IS NULL AND
+		(md5=? OR (fname=? AND fext=?))
 	');
 	$q->bindValue(1, $t['md5'],   PDO::PARAM_LOB);
 	$q->bindValue(2, $t['fname'], PDO::PARAM_STR);
 	$q->bindValue(3, $t['fext'],  PDO::PARAM_STR);
 	$q->execute();
 	if ($q->fetchColumn())
-		$rv = false;
-	$q = null;
-	$db = null;
-	return $rv;
-}
-
-function db_up($t)
-{
-	if (!db_can_up($t))
 		return 'File exists.';
-	$db = db_open();
+
 	$q = $db->prepare('
-	INSERT INTO dat (
-		tno,
-		cno,
+	SELECT MAX(tno) FROM dat WHERE cno=1
+	');
+	$q->execute();
+	$lastup = $q->fetchColumn();
+
+	$q = $db->prepare('
+	INSERT INTO dat (tno, cno,
 		subject, name, body, md5, fname, fext, fsize)
-	VALUES (
-		(SELECT 1+COUNT(1) FROM dat WHERE cno=1),
-		1,
+	VALUES (?, 1,
 		?, ?, ?, ?, ?, ?, ?)
 	');
-	$q->bindValue(1, $t['sub'],   PDO::PARAM_STR);
-	$q->bindValue(2, $t['nam'],   PDO::PARAM_STR);
-	$q->bindValue(3, $t['com'],   PDO::PARAM_STR);
-	$q->bindValue(4, $t['md5'],   PDO::PARAM_LOB);
-	$q->bindValue(5, $t['fname'], PDO::PARAM_STR);
-	$q->bindValue(6, $t['fext'],  PDO::PARAM_STR);
-	$q->bindValue(7, $t['fsize'], PDO::PARAM_INT);
-	$res = $q->execute();
-	$q = null;
-	$db = null;
-	if (!$res)
-		return 'Failed to insert post.';
+	$q->bindValue(1, $lastup+1,     PDO::PARAM_STR);
+	$q->bindValue(2, $t['subject'], PDO::PARAM_STR);
+	$q->bindValue(3, $t['name'],    PDO::PARAM_STR);
+	$q->bindValue(4, $t['body'],    PDO::PARAM_STR);
+	$q->bindValue(5, $t['md5'],     PDO::PARAM_LOB);
+	$q->bindValue(6, $t['fname'],   PDO::PARAM_STR);
+	$q->bindValue(7, $t['fext'],    PDO::PARAM_STR);
+	$q->bindValue(8, $t['fsize'],   PDO::PARAM_INT);
+	$q->execute();
+
+	$db->commit();
+
 	return '';
 }
 
@@ -136,10 +133,7 @@ function db_del($tno, $cno)
 	$q->bindValue(1, $tno, PDO::PARAM_INT);
 	$q->bindValue(2, $cno, PDO::PARAM_INT);
 	$q->execute();
-	$count = $q->rowCount();
-	$q = null;
-	$db = null;
-	if (!$count)
+	if (!$q->rowCount())
 		return 'Post not found.';
 	return '';
 }
@@ -147,94 +141,60 @@ function db_del($tno, $cno)
 function db_get_front()
 {
 	$db = db_open();
-	# the shitty nested thing is to apply the bump order sort after
-	# rowid sort plus limit
 	$q = $db->prepare('
-	SELECT * FROM (
-		SELECT
-			tno AS no,
-			subject,
-			name,
-			fname,
-			fext,
-			fsize,
-			md5,
-			(SELECT -1+COUNT(1) FROM dat AS d WHERE d.tno=dat.tno) AS coms,
-			(SELECT MAX(rowid) FROM dat AS d WHERE d.tno=dat.tno) AS maxt
-		FROM dat
-		WHERE md5 NOT NULL AND deleted IS NULL
-		ORDER BY rowid DESC
-		LIMIT 10
-	) ORDER BY maxt DESC
+	SELECT
+		*,
+		(SELECT MAX(cno)-1 FROM dat AS d WHERE d.tno=dat.tno) AS coms,
+		(SELECT MAX(rowid) FROM dat AS d WHERE d.tno=dat.tno) AS _bump
+	FROM dat
+	WHERE cno=1 AND fpurged IS NULL
+	ORDER BY _bump DESC
+	LIMIT 10
 	');
 	$q->execute();
-	$rv = $q->fetchAll();
-	$q = null;
-	$db = null;
-	return $rv;
+	return $q->fetchAll();
 }
 
 # call after inserting a new thread
 # returns threads whose file must be deleted
 function db_claim_purge_files()
 {
-	$dat = db_get_front();
-	if (!is_array($dat))
-		return [];
-	$old = INF;
-	foreach ($dat as $t)
-		if ($t['no'] < $old)
-			$old = $t['no'];
-	if (is_infinite($old))
-		return [];
-
 	$db = db_open();
 
-	# list
-	$q = $db->prepare('
-	SELECT * FROM dat
-	WHERE tno<? AND cno=1 AND fpurged IS NULL
-	');
-	$q->bindValue(1, $old, PDO::PARAM_INT);
-	$q->execute();
-	$rv = $q->fetchAll();
+	$db->beginTransaction();
 
-	# mark
 	$q = $db->prepare('
-	UPDATE dat SET fpurged=1
-	WHERE tno<? AND cno=1 AND fpurged IS NULL
+	SELECT fname, fext FROM dat
+	WHERE cno=1 AND fpurged IS NULL
+	ORDER BY tno DESC
+	LIMIT -1 OFFSET 10
 	');
-	$q->bindValue(1, $old, PDO::PARAM_INT);
+	$q->execute();
+	$dat = $q->fetchAll();
+
+	$q = $db->prepare('
+	UPDATE dat
+	SET fpurged=1
+	WHERE cno=1 AND tno IN (
+		SELECT tno FROM dat
+		WHERE cno=1 AND fpurged IS NULL
+		ORDER BY tno DESC
+		LIMIT -1 OFFSET 10)
+	');
 	$q->execute();
 
-	$q = null;
-	$db = null;
-	return $rv;
+	$db->commit();
+
+	return $dat;
 }
 
-function db_get_thread($no)
+function db_get_thread($tno)
 {
 	$db = db_open();
-	$q = $db->prepare('
-	SELECT
-		tno,
-		cno,
-		subject,
-		name,
-		body,
-		fname,
-		fext,
-		deleted,
-		md5
-	FROM dat
-	WHERE tno=?
-	');
-	$q->bindValue(1, $no, PDO::PARAM_INT);
+	$q = $db->prepare('SELECT * FROM dat WHERE tno=?');
+	$q->bindValue(1, $tno, PDO::PARAM_INT);
 	$q->execute();
-	$rv = $q->fetchAll();
-	$q = null;
-	$db = null;
-	return $rv;
+	return $q->fetchAll();
 }
 
 function db_get_comment($tno, $cno)
@@ -244,8 +204,5 @@ function db_get_comment($tno, $cno)
 	$q->bindValue(1, $tno, PDO::PARAM_INT);
 	$q->bindValue(2, $cno, PDO::PARAM_INT);
 	$q->execute();
-	$rv = $q->fetch();
-	$q = null;
-	$db = null;
-	return $rv;
+	return $q->fetch();
 }

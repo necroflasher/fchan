@@ -23,13 +23,13 @@ function process_up()
 	$com = preg_replace('/\n/', '<BR>', $com);
 
 	$err = db_up([
-		'sub'   => htmlspecialchars($sub),
-		'nam'   => htmlspecialchars($nam),
-		'com'   => $com,
-		'md5'   => $md5,
-		'fname' => $fname,
-		'fext'  => $fext,
-		'fsize' => $fsize,
+		'subject' => htmlspecialchars($sub),
+		'name'    => htmlspecialchars($nam),
+		'body'    => $com,
+		'md5'     => $md5,
+		'fname'   => $fname,
+		'fext'    => $fext,
+		'fsize'   => $fsize,
 	]);
 
 	$err and die("Error: $err");
