@@ -39,6 +39,7 @@ function process_up()
 	$body = htmlspecialchars($body);
 	$body = preg_replace('/\n/', '<BR>', $body);
 
+	$tno = null;
 	$fpurge_dat = null;
 	$err = db_up([
 		'subject' => $subject,
@@ -49,7 +50,7 @@ function process_up()
 		'fext'    => $fext,
 		'fsize'   => $fsize,
 		'pass'    => $pass,
-	], $fpurge_dat);
+	], $tno, $fpurge_dat);
 
 	$err and die("Error: $err");
 
@@ -58,7 +59,7 @@ function process_up()
 	foreach ($fpurge_dat as $dat)
 		unlink(FILES_DIR.'/'.$dat['fname'].$dat['fext']);
 
-	echo 'Upload complete. <A href="',FRONT_PUBLIC,'">Return</A>';
+	echo 'Upload complete. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">View</A>';
 }
 
 function process_re()
@@ -73,16 +74,16 @@ function process_re()
 	$body = htmlspecialchars($body);
 	$body = preg_replace('/\n/', '<BR>', $body);
 
+	$cno = null;
 	$err = db_re([
 		'tno'  => $tno,
 		'name' => $name,
 		'body' => $body,
 		'pass' => $pass,
-	]);
-
+	], $cno);
 	$err and die("Error: $err");
 
-	echo 'Post created. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">Return</A>';
+	echo 'Post created. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'#c',$cno,'">View</A>';
 }
 
 function process_del()
@@ -98,5 +99,5 @@ function process_del()
 	if ($dat['fname'])
 		unlink(FILES_DIR.'/'.$dat['fname'].$dat['fext']);
 
-	echo 'Post deleted. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'">Return</A>';
+	echo 'Post deleted. <A href="',FRONT_PUBLIC,'?v=thread&no=',$tno,'#c',$cno,'">Return</A>';
 }

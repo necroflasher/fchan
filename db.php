@@ -41,7 +41,7 @@ function db_firstrun()
 	');
 }
 
-function db_up($t, &$fpurge_dat_out)
+function db_up($t, &$tno_out, &$fpurge_dat_out)
 {
 	$db = db_open();
 
@@ -95,7 +95,7 @@ function db_up($t, &$fpurge_dat_out)
 	LIMIT -1 OFFSET 10
 	');
 	$q->execute();
-	$fpurge_dat_out = $q->fetchAll();
+	$fpurge_dat = $q->fetchAll();
 
 	$q = $db->prepare('
 	UPDATE dat
@@ -110,10 +110,13 @@ function db_up($t, &$fpurge_dat_out)
 
 	$db->commit();
 
+	$tno_out = $lastup+1;
+	$fpurge_dat_out = $fpurge_dat;
+
 	return '';
 }
 
-function db_re($t)
+function db_re($t, &$cno_out)
 {
 	$db = db_open();
 
@@ -155,6 +158,8 @@ function db_re($t)
 	$q->execute();
 
 	$db->commit();
+
+	$cno_out = $lastcom+1;
 
 	return '';
 }
