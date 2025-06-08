@@ -1,5 +1,14 @@
 <?PHP
 
+function userstr($s)
+{
+	if (!is_string($s))
+		return '';
+
+	return $s;
+
+}
+
 function userfilename($s)
 {
 	if (!is_string($s))

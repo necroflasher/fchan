@@ -2,32 +2,46 @@
 
 function process_up()
 {
-	array_key_exists('file', $_FILES) or die('Error: No file.');
-	!$_FILES["file"]["error"]         or die('Error: Upload failed.');
+	# text fields
 
-	$sub = trim($_POST['subject']);
-	$nam = trim($_POST['name']);
-	$com = trim($_POST['body']);
+	$subject = trim(userstr(@$_POST['subject']));
+	$name    = trim(userstr(@$_POST['name']));
+	$body    = trim(userstr(@$_POST['body']));
 
-	$sub || $com || die('Error: Subject or comment required.');
+	$subject or $body or die('Error: Subject or comment required.');
 
-	$md5   = md5_file($_FILES["file"]["tmp_name"], true);
-	$fname = pathinfo($_FILES["file"]["name"], PATHINFO_FILENAME);
-	$fext  = '.'.pathinfo($_FILES["file"]["name"], PATHINFO_EXTENSION);
-	$fsize = $_FILES["file"]["size"];
+	# file fields
+
+	$fname_raw = userstr(@$_FILES["file"]["name"]);
+	$tmpfile   = userstr(@$_FILES["file"]["tmp_name"]);
+	$fsize     = @$_FILES["file"]["size"];
+	$md5       = null;
+
+	$fname_raw and $tmpfile   or die('Error: No file.');
+	$fsize                    or die('Error: Empty file.');
+	!$_FILES["file"]["error"] or die('Error: Upload failed.');
+
+	# file derived
+
+	$fname = pathinfo($fname_raw, PATHINFO_FILENAME);
+	$fext  = '.'.pathinfo($fname_raw, PATHINFO_EXTENSION);
 
 	$err = userfilename($fname);
 	$err and die("Error: Bad filename. ($err)");
 
 	@EXTS[$fext] or die('Error: Unsupported filetype.');
 
-	$com = htmlspecialchars($com);
-	$com = preg_replace('/\n/', '<BR>', $com);
+	# final stuff
+
+	$md5 = md5_file($_FILES["file"]["tmp_name"], true);
+
+	$body = htmlspecialchars($body);
+	$body = preg_replace('/\n/', '<BR>', $body);
 
 	$err = db_up([
-		'subject' => htmlspecialchars($sub),
-		'name'    => htmlspecialchars($nam),
-		'body'    => $com,
+		'subject' => htmlspecialchars($subject),
+		'name'    => htmlspecialchars($name),
+		'body'    => $body,
 		'md5'     => $md5,
 		'fname'   => $fname,
 		'fext'    => $fext,
