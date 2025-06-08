@@ -13,7 +13,6 @@
 
 # ni:
 # - more deletion stuff
-#   - passwords
 #   - mod deletion without password
 #   - cooldown timer
 # - file tags
@@ -24,7 +23,7 @@
 # - sage
 # - quote links
 
-const FCHAN_DB = '/tmp/fchan.27.db';
+const FCHAN_DB = '/tmp/fchan.28.db';
 
 const FRONT_PUBLIC = '/fchan/';
 

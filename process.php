@@ -7,6 +7,7 @@ function process_up()
 	$subject = trim(userstr(@$_POST['subject']));
 	$name    = trim(userstr(@$_POST['name']));
 	$body    = trim(userstr(@$_POST['body']));
+	$pass    = userstr(@$_POST['pass']);
 
 	$subject or $body or die('Error: Subject or comment required.');
 
@@ -47,6 +48,7 @@ function process_up()
 		'fname'   => $fname,
 		'fext'    => $fext,
 		'fsize'   => $fsize,
+		'pass'    => $pass,
 	], $fpurge_dat);
 
 	$err and die("Error: $err");
@@ -63,6 +65,7 @@ function process_re()
 {
 	$name = trim(userstr(@$_POST['name']));
 	$body = trim(userstr(@$_POST['body']));
+	$pass = userstr(@$_POST['pass']);
 	$tno  = userint(@$_POST['no']);
 
 	$body or die('Error: No text entered.');
@@ -74,6 +77,7 @@ function process_re()
 		'tno'  => $tno,
 		'name' => htmlspecialchars($name),
 		'body' => $body,
+		'pass' => $pass,
 	]);
 
 	$err and die("Error: $err");
@@ -83,11 +87,12 @@ function process_re()
 
 function process_del()
 {
-	$tno = userint(@$_POST['tno']);
-	$cno = userint(@$_POST['cno']);
+	$tno  = userint(@$_POST['tno']);
+	$cno  = userint(@$_POST['cno']);
+	$pass = userstr(@$_POST['pass']);
 
 	$dat = null;
-	$err = db_del($tno, $cno, $dat);
+	$err = db_del($tno, $cno, $pass, $dat);
 	$err and die("Error: $err");
 
 	if ($dat['fname'])

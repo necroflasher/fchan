@@ -23,6 +23,9 @@ function render_front()
 	echo   '<TH>File';
 	echo   '<TD><INPUT type="file" name="file">';
 	echo '<TR>';
+	echo   '<TH>Password';
+	echo   '<TD><INPUT type="text" name="pass">';
+	echo '<TR>';
 	echo   '<TH>';
 	echo   '<TD><INPUT type="submit">';
 	echo '</TABLE>';
@@ -132,6 +135,9 @@ function render_thread()
 	echo   '<TH>Comment';
 	echo   '<TD><TEXTAREA name="body" rows=4 cols=40></TEXTAREA>';
 	echo '<TR>';
+	echo   '<TH>Password';
+	echo   '<TD><INPUT type="text" name="pass">';
+	echo '<TR>';
 	echo   '<TH>';
 	echo   '<TD><INPUT type="submit">';
 	echo '</TABLE>';
@@ -175,7 +181,14 @@ function render_options()
 	echo '<INPUT type="hidden" name="cno" value="',$cno,'">';
 	echo '<FIELDSET>';
 	echo '<LEGEND>Delete post</LEGEND>';
+	echo '<TABLE>';
+	echo '<TR>';
+	echo '<TD><LABEL for="pass">Password:</LABEL>';
+	echo '<TD><INPUT type="text" name="pass" id="pass">';
+	echo '<TR>';
+	echo '<TD colspan=2>';
 	echo '<INPUT type="submit">';
+	echo '</TABLE>';
 	echo '</FIELDSET>';
 	echo '</FORM>';
 }

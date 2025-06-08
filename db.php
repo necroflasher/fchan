@@ -9,6 +9,7 @@ function db_firstrun()
 		tno     INTEGER NOT NULL CHECK(tno>=1),
 		cno     INTEGER NOT NULL CHECK(cno>=1),
 		time    INTEGER NOT NULL,
+		pass    TEXT    NOT NULL CHECK(pass<>''),
 		subject TEXT,
 		name    TEXT,
 		body    TEXT,
@@ -40,6 +41,11 @@ function db_up($t, &$fpurge_dat_out)
 {
 	$db = db_open();
 
+	$pass = $t['pass'];
+	if ($pass === '')
+		$pass = random_bytes(16);
+	$hash = password_hash($pass, PASSWORD_BCRYPT);
+
 	$db->beginTransaction();
 
 	$q = $db->prepare('
@@ -62,19 +68,20 @@ function db_up($t, &$fpurge_dat_out)
 	$lastup = $q->fetchColumn();
 
 	$q = $db->prepare('
-	INSERT INTO dat (tno, cno, time,
+	INSERT INTO dat (tno, cno, time, pass,
 		subject, name, body, md5, fname, fext, fsize)
-	VALUES (?, 1, UNIXEPOCH(),
+	VALUES (?, 1, UNIXEPOCH(), ?,
 		?, ?, ?, ?, ?, ?, ?)
 	');
 	$q->bindValue(1, $lastup+1,     PDO::PARAM_STR);
-	$q->bindValue(2, $t['subject'], PDO::PARAM_STR);
-	$q->bindValue(3, $t['name'],    PDO::PARAM_STR);
-	$q->bindValue(4, $t['body'],    PDO::PARAM_STR);
-	$q->bindValue(5, $t['md5'],     PDO::PARAM_LOB);
-	$q->bindValue(6, $t['fname'],   PDO::PARAM_STR);
-	$q->bindValue(7, $t['fext'],    PDO::PARAM_STR);
-	$q->bindValue(8, $t['fsize'],   PDO::PARAM_INT);
+	$q->bindValue(2, $hash,         PDO::PARAM_STR);
+	$q->bindValue(3, $t['subject'], PDO::PARAM_STR);
+	$q->bindValue(4, $t['name'],    PDO::PARAM_STR);
+	$q->bindValue(5, $t['body'],    PDO::PARAM_STR);
+	$q->bindValue(6, $t['md5'],     PDO::PARAM_LOB);
+	$q->bindValue(7, $t['fname'],   PDO::PARAM_STR);
+	$q->bindValue(8, $t['fext'],    PDO::PARAM_STR);
+	$q->bindValue(9, $t['fsize'],   PDO::PARAM_INT);
 	$q->execute();
 
 	$q = $db->prepare('
@@ -106,6 +113,11 @@ function db_re($t)
 {
 	$db = db_open();
 
+	$pass = $t['pass'];
+	if ($pass === '')
+		$pass = random_bytes(16);
+	$hash = password_hash($pass, PASSWORD_BCRYPT);
+
 	$db->beginTransaction();
 
 	$q = $db->prepare('
@@ -128,13 +140,14 @@ function db_re($t)
 		return 'Reply limit reached.';
 
 	$q = $db->prepare('
-	INSERT INTO dat (tno, cno, time, name, body)
-	VALUES (?, ?, UNIXEPOCH(), ?, ?)
+	INSERT INTO dat (tno, cno, time, pass, name, body)
+	VALUES (?, ?, UNIXEPOCH(), ?, ?, ?)
 	');
 	$q->bindValue(1, $t['tno'],  PDO::PARAM_INT);
 	$q->bindValue(2, $lastcom+1, PDO::PARAM_INT);
-	$q->bindValue(3, $t['name'], PDO::PARAM_STR);
-	$q->bindValue(4, $t['body'], PDO::PARAM_STR);
+	$q->bindValue(3, $hash,      PDO::PARAM_STR);
+	$q->bindValue(4, $t['name'], PDO::PARAM_STR);
+	$q->bindValue(5, $t['body'], PDO::PARAM_STR);
 	$q->execute();
 
 	$db->commit();
@@ -142,7 +155,7 @@ function db_re($t)
 	return '';
 }
 
-function db_del($tno, $cno, &$dat_out)
+function db_del($tno, $cno, $pass, &$dat_out)
 {
 	$db = db_open();
 
@@ -159,6 +172,8 @@ function db_del($tno, $cno, &$dat_out)
 		return 'Post not found.';
 	if ($dat['deleted'])
 		return 'Post has already been deleted.';
+	if (!password_verify($pass, $dat['pass']))
+		return 'Wrong password.';
 	$dat_out = $dat;
 
 	$q = $db->prepare("
