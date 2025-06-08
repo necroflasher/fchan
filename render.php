@@ -122,16 +122,13 @@ function render_thread()
 	echo '<B><I><A href="',FRONT_PUBLIC,'">fchan</A></I></B>';
 	echo '<HR>';
 
-	if ($dat[0]['subject'])
-	{
-		echo '<FONT size="+1">';
-		echo '<B dir="auto" lang class="wrap">';
-		echo htmlspecialchars($dat[0]['subject']);
-		echo '</B>';
-		echo ' (',$tno,')';
-		echo '</FONT>';
-		echo '<HR>';
-	}
+	echo '<FONT size="+1">';
+	echo '<B dir="auto" lang class="wrap">';
+	echo $dat[0]['subject']?htmlspecialchars($dat[0]['subject']):'No subject';
+	echo '</B>';
+	echo ' (',$tno,')';
+	echo '</FONT>';
+	echo '<HR>';
 
 	$delpost = [
 		'name' => 'Anonymous',
