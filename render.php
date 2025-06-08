@@ -12,19 +12,19 @@ function render_front()
 	echo '<TABLE border>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="subject">Subject</LABEL>';
-	echo   '<TD><INPUT type="text" name="subject" id="subject">';
+	echo   '<TD><INPUT dir="auto" type="text" name="subject" id="subject">';
 	echo '<TR>';
 	echo   '<TH><LABEL for="name">Name</LABEL>';
-	echo   '<TD><INPUT type="text" name="name" id="name">';
+	echo   '<TD><INPUT dir="auto" type="text" name="name" id="name">';
 	echo '<TR>';
 	echo   '<TH><LABEL for="body">Comment</LABEL>';
-	echo   '<TD><TEXTAREA name="body" id="body" rows=4 cols=40></TEXTAREA>';
+	echo   '<TD><TEXTAREA dir="auto" name="body" id="body" rows=4 cols=40></TEXTAREA>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="file">File</LABEL>';
 	echo   '<TD><INPUT type="file" name="file" id="file">';
 	echo '<TR>';
 	echo   '<TH><LABEL for="pass">Password</LABEL>';
-	echo   '<TD><INPUT type="text" name="pass" id="pass">';
+	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass">';
 	echo '<TR>';
 	echo   '<TH>';
 	echo   '<TD><INPUT type="submit">';
@@ -43,19 +43,18 @@ function render_front()
 	echo '<TH>';
 	foreach (db_get_front() as $t)
 	{
-		$ftext = htmlspecialchars($t['fname']).$t['fext'];
-		$ftitle = $ftext;
+		$ftext = '<SPAN dir="auto" lang>'.htmlspecialchars($t['fname']).'</SPAN>'.$t['fext'];
 		if (mb_strlen($t['fname']) > 20)
-			$ftext = htmlspecialchars(mb_substr($t['fname'], 0, 20)).'(...)'.$t['fext'];
+			$ftext = '<SPAN dir="auto" lang>'.htmlspecialchars(mb_substr($t['fname'], 0, 20)).'(...)'.'</SPAN>'.$t['fext'];
 
 		echo '<TR>';
 		echo '<TD align="right">',$t['tno'];
-		echo '<TD><B>',$t['name']?$t['name']:'Anonymous','</B>';
-		echo '<TD><A';
+		echo '<TD dir="auto" lang><B>',$t['name']?$t['name']:'Anonymous','</B>';
+		echo '<TD dir="auto" lang><A';
 		echo ' href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'"';
-		echo ' title="',$ftitle,'"';
+		echo ' title="',htmlspecialchars($t['fname']),'"';
 		echo '>',$ftext,'</A>';
-		echo '<TD><B>',$t['subject'],'</B>';
+		echo '<TD dir="auto" lang><B>',$t['subject'],'</B>';
 		echo '<TD>',format_fs($t['fsize']);
 		echo '<TD>',$t['coms'];
 		echo '<TD>[ <A href="?v=thread&no=',$t['tno'],'">Reply</A> ]';
@@ -82,7 +81,7 @@ function render_thread()
 
 	if ($dat[0]['subject'])
 	{
-		echo '<FONT size="+1"><B>',$dat[0]['subject'],'</B> (',$no,')</FONT><BR>';
+		echo '<FONT size="+1"><B dir="auto" lang>',$dat[0]['subject'],'</B> (',$no,')</FONT><BR>';
 		echo '<HR>';
 	}
 
@@ -98,7 +97,7 @@ function render_thread()
 				'md5'  => null,
 			];
 		}
-		echo $t['cno'],': <B>';
+		echo $t['cno'],': <B dir="auto" lang>';
 		echo $t['name']?$t['name']:'Anonymous';
 		echo '</B>';
 		echo ' [';
@@ -106,7 +105,7 @@ function render_thread()
 		echo 'Options';
 		echo '</A>';
 		echo ']';
-		echo '<BLOCKQUOTE>';
+		echo '<BLOCKQUOTE dir="auto" lang>';
 		if (!(!$i && !$t['body']))
 		{
 			echo $t['body']?$t['body']:'<I>No comment.</I>';
@@ -116,7 +115,7 @@ function render_thread()
 			if ($t['body'])
 				echo '<BR><BR>';
 			echo '<A href="',FILES_DIR_PUBLIC,'/',htmlspecialchars($t['fname']),$t['fext'],'">';
-			echo htmlspecialchars($t['fname']),$t['fext'];
+			echo '<SPAN dir="auto" lang>',htmlspecialchars($t['fname']),'</SPAN>',$t['fext'];
 			echo '</A>';
 			
 		}
@@ -130,13 +129,13 @@ function render_thread()
 	echo '<TABLE border>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="name">Name</LABEL>';
-	echo   '<TD><INPUT type="text" name="name" id="name">';
+	echo   '<TD><INPUT dir="auto" type="text" name="name" id="name">';
 	echo '<TR>';
 	echo   '<TH><LABEL for="body">Comment</LABEL>';
-	echo   '<TD><TEXTAREA name="body" id="body" rows=4 cols=40></TEXTAREA>';
+	echo   '<TD><TEXTAREA dir="auto" name="body" id="body" rows=4 cols=40></TEXTAREA>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="pass">Password</LABEL>';
-	echo   '<TD><INPUT type="text" name="pass" id="pass">';
+	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass">';
 	echo '<TR>';
 	echo   '<TH>';
 	echo   '<TD><INPUT type="submit">';
@@ -169,7 +168,7 @@ function render_options()
 			continue;
 		echo '<TR>';
 		echo '<TH>',$k;
-		echo '<TD>',htmlspecialchars($t[$k]);
+		echo '<TD dir="auto" lang>',htmlspecialchars($t[$k]);
 	}
 	echo '</TABLE>';
 
@@ -184,7 +183,7 @@ function render_options()
 	echo '<TABLE>';
 	echo '<TR>';
 	echo '<TD><LABEL for="pass">Password:</LABEL>';
-	echo '<TD><INPUT type="text" name="pass" id="pass">';
+	echo '<TD><INPUT dir="auto" type="text" name="pass" id="pass">';
 	echo '<TR>';
 	echo '<TD colspan=2>';
 	echo '<INPUT type="submit">';
