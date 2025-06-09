@@ -237,11 +237,15 @@ function render_options()
 
 	echo '<P>';
 
+	$deldisabled = '';
+	if ($t['deleted'])
+		$deldisabled = ' disabled="disabled"';
+
 	echo '<FORM action="',FRONT_PUBLIC,'" method="POST">';
 	echo '<INPUT type="hidden" name="p" value="del">';
 	echo '<INPUT type="hidden" name="tno" value="',$tno,'">';
 	echo '<INPUT type="hidden" name="cno" value="',$cno,'">';
-	echo '<FIELDSET>';
+	echo '<FIELDSET',$deldisabled,'>';
 	echo '<LEGEND>Delete post</LEGEND>';
 	echo '<TABLE>';
 	echo '<TR>';
