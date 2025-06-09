@@ -2,6 +2,11 @@
 
 function render_front()
 {
+	$pass = userstr(@$_COOKIE['pass']);
+
+	if (!$pass)
+		$pass = genpass();
+
 	html_start(200, 'fchan');
 
 	echo '<STYLE type="text/css"><!--';
@@ -25,7 +30,7 @@ function render_front()
 	echo   '<TD><INPUT type="file" name="file" id="file">';
 	echo '<TR>';
 	echo   '<TH><LABEL for="pass">Password</LABEL>';
-	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass">';
+	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass" value="',htmlspecialchars($pass),'">';
 	echo '<TR>';
 	echo   '<TH>';
 	echo   '<TD><INPUT type="submit">';
@@ -106,7 +111,11 @@ function render_front()
 
 function render_thread()
 {
-	$tno = userint(@$_GET['no']);
+	$tno  = userint(@$_GET['no']);
+	$pass = userstr(@$_COOKIE['pass']);
+
+	if (!$pass)
+		$pass = genpass();
 
 	$dat = db_get_thread($tno);
 
@@ -182,7 +191,7 @@ function render_thread()
 	echo   '<TD><TEXTAREA dir="auto" name="body" id="body" rows=4 cols=40></TEXTAREA>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="pass">Password</LABEL>';
-	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass">';
+	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass" value="',htmlspecialchars($pass),'">';
 	echo '<TR>';
 	echo   '<TH>';
 	echo   '<TD><INPUT type="submit">';
@@ -194,8 +203,9 @@ function render_thread()
 
 function render_options()
 {
-	$tno = userint(@$_GET['no']);
-	$cno = userint(@$_GET['com']);
+	$tno  = userint(@$_GET['no']);
+	$cno  = userint(@$_GET['com']);
+	$pass = userstr(@$_COOKIE['pass']);
 
 	$t = db_get_comment($tno, $cno);
 
@@ -233,7 +243,7 @@ function render_options()
 	echo '<TABLE>';
 	echo '<TR>';
 	echo '<TD><LABEL for="pass">Password:</LABEL>';
-	echo '<TD><INPUT dir="auto" type="text" name="pass" id="pass">';
+	echo '<TD><INPUT dir="auto" type="text" name="pass" id="pass" value="',htmlspecialchars($pass),'">';
 	echo '<TR>';
 	echo '<TD colspan=2>';
 	echo '<INPUT type="submit">';

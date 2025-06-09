@@ -1,5 +1,13 @@
 <?PHP
 
+function genpass()
+{
+	$pass = '';
+	for ($i = 0; $i < 10; $i++)
+		$pass .= chr(rand(0x21, 0x7e));
+	return $pass;
+}
+
 function html_start($status, ...$title)
 {
 	http_response_code($status);

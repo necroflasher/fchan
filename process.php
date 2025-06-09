@@ -8,6 +8,7 @@ function process_up()
 	$name    = trim(userstr(@$_POST['name']));
 	$body    = trim(userstr(@$_POST['body']));
 	$pass    = userstr(@$_POST['pass']);
+	setcookie('pass', $pass);
 
 	$subject or $body or html_die(400, 'Error: Subject or comment required.');
 
@@ -71,6 +72,7 @@ function process_re()
 	$body = trim(userstr(@$_POST['body']));
 	$pass = userstr(@$_POST['pass']);
 	$tno  = userint(@$_POST['no']);
+	setcookie('pass', $pass);
 
 	$body or html_die(400, 'Error: No text entered.');
 
@@ -94,6 +96,7 @@ function process_del()
 	$tno  = userint(@$_POST['tno']);
 	$cno  = userint(@$_POST['cno']);
 	$pass = userstr(@$_POST['pass']);
+	setcookie('pass', $pass);
 
 	$dat = null;
 	$err = db_del($tno, $cno, $pass, $dat);
