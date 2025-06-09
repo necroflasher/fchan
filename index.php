@@ -23,7 +23,7 @@
 # - sage
 # - quote links
 
-const FCHAN_DB = '/tmp/fchan.28.db';
+const FCHAN_DB = '/tmp/fchan.29.db';
 
 const FRONT_PUBLIC = '/fchan/';
 

@@ -19,6 +19,7 @@ function db_firstrun()
 		cno     INTEGER NOT NULL CHECK(cno>=1),
 		time    INTEGER NOT NULL,
 		pass    TEXT    NOT NULL CHECK(pass<>''),
+		ip      TEXT             CHECK(ip<>''),
 		subject TEXT,
 		name    TEXT,
 		body    TEXT,
@@ -85,20 +86,21 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$lastup = $q->fetchColumn();
 
 	$q = $db->prepare('
-	INSERT INTO dat (tno, cno, time, pass,
+	INSERT INTO dat (tno, cno, time, pass, ip,
 		subject, name, body, md5, fname, fext, fsize)
-	VALUES (?, 1, UNIXEPOCH(), ?,
+	VALUES (?, 1, UNIXEPOCH(), ?, ?,
 		?, ?, ?, ?, ?, ?, ?)
 	');
-	$q->bindValue(1, $lastup+1,     PDO::PARAM_STR);
-	$q->bindValue(2, $hash,         PDO::PARAM_STR);
-	$q->bindValue(3, $t['subject'], PDO::PARAM_STR);
-	$q->bindValue(4, $t['name'],    PDO::PARAM_STR);
-	$q->bindValue(5, $t['body'],    PDO::PARAM_STR);
-	$q->bindValue(6, $t['md5'],     PDO::PARAM_LOB);
-	$q->bindValue(7, $t['fname'],   PDO::PARAM_STR);
-	$q->bindValue(8, $t['fext'],    PDO::PARAM_STR);
-	$q->bindValue(9, $t['fsize'],   PDO::PARAM_INT);
+	$q->bindValue(1,  $lastup+1,     PDO::PARAM_STR);
+	$q->bindValue(2,  $hash,         PDO::PARAM_STR);
+	$q->bindValue(3,  userip(),      PDO::PARAM_STR);
+	$q->bindValue(4,  $t['subject'], PDO::PARAM_STR);
+	$q->bindValue(5,  $t['name'],    PDO::PARAM_STR);
+	$q->bindValue(6,  $t['body'],    PDO::PARAM_STR);
+	$q->bindValue(7,  $t['md5'],     PDO::PARAM_LOB);
+	$q->bindValue(8,  $t['fname'],   PDO::PARAM_STR);
+	$q->bindValue(9,  $t['fext'],    PDO::PARAM_STR);
+	$q->bindValue(10, $t['fsize'],   PDO::PARAM_INT);
 	$q->execute();
 
 	$q = $db->prepare('
@@ -160,14 +162,15 @@ function db_re($t, &$cno_out)
 		return 'Reply limit reached.';
 
 	$q = $db->prepare('
-	INSERT INTO dat (tno, cno, time, pass, name, body)
-	VALUES (?, ?, UNIXEPOCH(), ?, ?, ?)
+	INSERT INTO dat (tno, cno, time, pass, ip, name, body)
+	VALUES (?, ?, UNIXEPOCH(), ?, ?, ?, ?)
 	');
 	$q->bindValue(1, $t['tno'],  PDO::PARAM_INT);
 	$q->bindValue(2, $lastcom+1, PDO::PARAM_INT);
 	$q->bindValue(3, $hash,      PDO::PARAM_STR);
-	$q->bindValue(4, $t['name'], PDO::PARAM_STR);
-	$q->bindValue(5, $t['body'], PDO::PARAM_STR);
+	$q->bindValue(4, userip(),   PDO::PARAM_STR);
+	$q->bindValue(5, $t['name'], PDO::PARAM_STR);
+	$q->bindValue(6, $t['body'], PDO::PARAM_STR);
 	$q->execute();
 
 	$db->commit();
@@ -206,7 +209,8 @@ function db_del($tno, $cno, $pass, &$dat_out)
 		name=NULL,
 		body=NULL,
 		fname=NULL,
-		fpurged=(CASE cno WHEN 1 THEN 1 ELSE NULL END)
+		fpurged=(CASE cno WHEN 1 THEN 1 ELSE NULL END),
+		ip=NULL
 	WHERE tno=? AND cno=?
 	");
 	$q->bindValue(1, $tno, PDO::PARAM_INT);

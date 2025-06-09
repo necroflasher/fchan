@@ -221,14 +221,17 @@ function render_options()
 	echo '--></STYLE>';
 
 	$ks = 'tno.cno.time.subject.name.body.fname.fext.fsize.md5.deleted.fpurged';
+	if (isadmin())
+		$ks .= ".ip*";
 	echo '<TABLE border>';
 	foreach (explode('.', $ks) as $k)
 	{
-		if (!$t[$k])
+		$v = $t[str_replace('*', '', $k)];
+		if (!$v)
 			continue;
 		echo '<TR>';
 		echo '<TH>',$k;
-		echo '<TD dir="auto" lang class="wrap">',htmlspecialchars($t[$k]);
+		echo '<TD dir="auto" lang class="wrap">',htmlspecialchars($v);
 	}
 	echo '</TABLE>';
 

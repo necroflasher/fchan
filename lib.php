@@ -1,5 +1,15 @@
 <?PHP
 
+function userip()
+{
+	return $_SERVER['REMOTE_ADDR'];
+}
+
+function isadmin()
+{
+	return userip() === '127.0.0.1';
+}
+
 function genpass()
 {
 	$pass = '';
