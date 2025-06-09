@@ -56,6 +56,8 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	$db->beginTransaction();
 
+	# [1/6] check duplicate file
+
 	$q = $db->prepare('
 	SELECT tno FROM dat WHERE
 		cno=1 AND
@@ -69,6 +71,8 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($tno_out = $q->fetchColumn())
 		return 'File exists.';
 
+	# [2/6] check file cooldown
+
 	$q = $db->prepare('
 	SELECT (UNIXEPOCH() - time) < 24*60*60 FROM dat
 	WHERE md5=?
@@ -79,11 +83,15 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($q->fetchColumn())
 		return 'Please wait a while before posting this file again.';
 
+	# [3/6] get current thread number
+
 	$q = $db->prepare('
 	SELECT MAX(tno) FROM dat WHERE cno=1
 	');
 	$q->execute();
 	$lastup = $q->fetchColumn();
+
+	# [4/6] insert thread
 
 	$q = $db->prepare('
 	INSERT INTO dat (tno, cno, time, pass, ip,
@@ -103,6 +111,8 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->bindValue(10, $t['fsize'],   PDO::PARAM_INT);
 	$q->execute();
 
+	# [5/6] get threads whose files to purge
+
 	$q = $db->prepare('
 	SELECT fname, fext FROM dat
 	WHERE cno=1 AND fpurged IS NULL
@@ -111,6 +121,8 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	');
 	$q->execute();
 	$fpurge_dat = $q->fetchAll();
+
+	# [6/6] mark those threads as purged
 
 	$q = $db->prepare('
 	UPDATE dat
@@ -142,6 +154,8 @@ function db_re($t, &$cno_out)
 
 	$db->beginTransaction();
 
+	# [1/3] check flags of thread
+
 	$q = $db->prepare('
 	SELECT deleted, fpurged FROM dat
 	WHERE tno=? AND cno=1
@@ -154,12 +168,16 @@ function db_re($t, &$cno_out)
 	if ($dat['deleted'] || $dat['fpurged'])
 		return 'Thread is expired or deleted.';
 
+	# [2/3] check reply limit
+
 	$q = $db->prepare('SELECT MAX(cno) FROM dat WHERE tno=?');
 	$q->bindValue(1, $t['tno'], PDO::PARAM_INT);
 	$q->execute();
 	$lastcom = $q->fetchColumn();
 	if ($lastcom >= 1000)
 		return 'Reply limit reached.';
+
+	# [3/3] insert post
 
 	$q = $db->prepare('
 	INSERT INTO dat (tno, cno, time, pass, ip, name, body)
@@ -186,6 +204,8 @@ function db_del($tno, $cno, $pass, &$dat_out)
 
 	$db->beginTransaction();
 
+	# [1/2] check post exists, password matches
+
 	$q = $db->prepare("
 	SELECT * FROM dat WHERE tno=? AND cno=?
 	");
@@ -201,6 +221,8 @@ function db_del($tno, $cno, $pass, &$dat_out)
 	    !password_verify($pass, $dat['pass']))
 		return 'Wrong password.';
 	$dat_out = $dat;
+
+	# [2/2] set deleted and clear some fields
 
 	$q = $db->prepare("
 	UPDATE dat
