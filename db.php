@@ -57,7 +57,20 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	$db->beginTransaction();
 
-	# [1/6] check duplicate file
+	# [1/7] check number of active threads
+	#       - relax this and only consider recent threads
+
+	$q = $db->prepare('
+	SELECT COUNT(1) >= 6 FROM dat WHERE
+		cno=1 AND fpurged IS NULL AND
+		ip=? AND (UNIXEPOCH() - time) < 3*24*60*60
+	');
+	$q->bindValue(1, userip(), PDO::PARAM_STR);
+	$q->execute();
+	if ($q->fetchColumn())
+		return 'Please wait a while before making a thread again.';
+
+	# [2/7] check duplicate file
 
 	$q = $db->prepare('
 	SELECT tno FROM dat WHERE
@@ -72,7 +85,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($tno_out = $q->fetchColumn())
 		return 'File exists.';
 
-	# [2/6] check file cooldown
+	# [3/7] check file cooldown
 
 	$q = $db->prepare('
 	SELECT (UNIXEPOCH() - time) < 24*60*60 FROM dat
@@ -84,7 +97,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($q->fetchColumn())
 		return 'Please wait a while before posting this file again.';
 
-	# [3/6] get current thread number
+	# [4/7] get current thread number
 
 	$q = $db->prepare('
 	SELECT MAX(tno) FROM dat WHERE cno=1
@@ -92,7 +105,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->execute();
 	$lastup = $q->fetchColumn();
 
-	# [4/6] insert thread
+	# [5/7] insert thread
 
 	$q = $db->prepare('
 	INSERT INTO dat (tno, cno, time, pass, ip,
@@ -113,7 +126,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->bindValue(11, $t['ftag'],    PDO::PARAM_INT);
 	$q->execute();
 
-	# [5/6] get threads whose files to purge
+	# [6/7] get threads whose files to purge
 
 	$q = $db->prepare('
 	SELECT fname, fext FROM dat
@@ -124,7 +137,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->execute();
 	$fpurge_dat = $q->fetchAll();
 
-	# [6/6] mark those threads as purged
+	# [7/7] mark those threads as purged
 
 	$q = $db->prepare('
 	UPDATE dat
