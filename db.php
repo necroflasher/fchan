@@ -92,7 +92,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	SELECT fname, fext FROM dat
 	WHERE cno=1 AND fpurged IS NULL
 	ORDER BY tno DESC
-	LIMIT -1 OFFSET 10
+	LIMIT -1 OFFSET 30
 	');
 	$q->execute();
 	$fpurge_dat = $q->fetchAll();
@@ -104,7 +104,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 		SELECT tno FROM dat
 		WHERE cno=1 AND fpurged IS NULL
 		ORDER BY tno DESC
-		LIMIT -1 OFFSET 10)
+		LIMIT -1 OFFSET 30)
 	');
 	$q->execute();
 
@@ -216,7 +216,7 @@ function db_get_front()
 	FROM dat
 	WHERE cno=1 AND fpurged IS NULL
 	ORDER BY _bump DESC
-	LIMIT 10
+	LIMIT 30
 	');
 	$q->execute();
 	return $q->fetchAll();
