@@ -39,6 +39,9 @@ function db_firstrun()
 	$db->exec('
 	CREATE INDEX dat_alive ON dat(tno) WHERE cno=1 AND fpurged IS NULL
 	');
+	$db->exec('
+	CREATE INDEX dat_reposts ON dat(md5, time) WHERE md5 NOT NULL
+	');
 }
 
 function db_up($t, &$tno_out, &$fpurge_dat_out)
@@ -64,6 +67,16 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->execute();
 	if ($tno_out = $q->fetchColumn())
 		return 'File exists.';
+
+	$q = $db->prepare('
+	SELECT (UNIXEPOCH() - time) < 24*60*60 FROM dat
+	WHERE md5=?
+	ORDER BY time DESC
+	');
+	$q->bindValue(1, $t['md5'], PDO::PARAM_LOB);
+	$q->execute();
+	if ($q->fetchColumn())
+		return 'Please wait a while before posting this file again.';
 
 	$q = $db->prepare('
 	SELECT MAX(tno) FROM dat WHERE cno=1
