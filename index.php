@@ -13,7 +13,6 @@
 
 # ni:
 # - more deletion stuff
-#   - mod deletion without password
 #   - cooldown timer
 # - file tags
 # - spam protection

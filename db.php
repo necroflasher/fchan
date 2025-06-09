@@ -197,7 +197,8 @@ function db_del($tno, $cno, $pass, &$dat_out)
 		return 'Post not found.';
 	if ($dat['deleted'])
 		return 'Post has already been deleted.';
-	if (!password_verify($pass, $dat['pass']))
+	if (!(isadmin() && $pass === '!admindel') &&
+	    !password_verify($pass, $dat['pass']))
 		return 'Wrong password.';
 	$dat_out = $dat;
 
