@@ -179,22 +179,32 @@ function render_thread()
 		echo '<HR>';
 	}
 
+	# checks: db.php db_re()
+	$formdisable = '';
+	if ($dat[0]['deleted'] ||
+	    $dat[0]['fpurged'] ||
+	    count($dat) >= 1000)
+	{
+		$formdisable = ' disabled="disabled"';
+		echo '<P>&#x25a0; This thread is closed for new comments.';
+	}
+
 	echo '<FORM action="',FRONT_PUBLIC,'" method="POST">';
 	echo '<INPUT type="hidden" name="p" value="re">';
 	echo '<INPUT type="hidden" name="no" value="',$tno,'">';
 	echo '<TABLE border>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="name">Name</LABEL>';
-	echo   '<TD><INPUT dir="auto" type="text" name="name" id="name">';
+	echo   '<TD><INPUT dir="auto" type="text" name="name" id="name"',$formdisable,'>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="body">Comment</LABEL>';
-	echo   '<TD><TEXTAREA dir="auto" name="body" id="body" rows=4 cols=40></TEXTAREA>';
+	echo   '<TD><TEXTAREA dir="auto" name="body" id="body" rows=4 cols=40',$formdisable,'></TEXTAREA>';
 	echo '<TR>';
 	echo   '<TH><LABEL for="pass">Password</LABEL>';
-	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass" value="',htmlspecialchars($pass),'">';
+	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass" value="',htmlspecialchars($pass),'"',$formdisable,'>';
 	echo '<TR>';
 	echo   '<TH>';
-	echo   '<TD><INPUT type="submit">';
+	echo   '<TD><INPUT type="submit"',$formdisable,'>';
 	echo '</TABLE>';
 	echo '</FORM>';
 
