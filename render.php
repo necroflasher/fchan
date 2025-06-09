@@ -29,6 +29,13 @@ function render_front()
 	echo   '<TH><LABEL for="file">File</LABEL>';
 	echo   '<TD><INPUT type="file" name="file" id="file">';
 	echo '<TR>';
+	echo   '<TH><LABEL for="tag">Tag</LABEL>';
+	echo   '<TD>';
+	echo   '<SELECT name="tag" id="tag">';
+	foreach (LONGTAGS as $i => $t)
+		echo '<OPTION value="',$i,'">',$i?$t:'Choose one:','</OPTION>';
+	echo   '</SELECT>';
+	echo '<TR>';
 	echo   '<TH><LABEL for="pass">Password</LABEL>';
 	echo   '<TD><INPUT dir="auto" type="text" name="pass" id="pass" value="',htmlspecialchars($pass),'">';
 	echo '<TR>';
@@ -43,6 +50,7 @@ function render_front()
 	echo '<TH>No.';
 	echo '<TH>Name';
 	echo '<TH>File';
+	echo '<TH>Tag';
 	echo '<TH>Subject';
 	echo '<TH>Size';
 	echo '<TH>Replies';
@@ -91,6 +99,8 @@ function render_front()
 		echo   ' data-size="',$t['fsize'],'"';
 		echo   $ftitle;
 		echo   '>',$ftext,'</A>';
+		echo '<TD>';
+		echo   '[',SHORTTAGS[$t['ftag']?$t['ftag']:0],']';
 		echo '<TD dir="auto" lang class="wrap">';
 		echo   '<B',$subjtitle,'>';
 		echo   $subjtext;
@@ -230,7 +240,7 @@ function render_options()
 	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
 	echo '--></STYLE>';
 
-	$ks = 'tno.cno.time.subject.name.body.fname.fext.fsize.md5.deleted.fpurged';
+	$ks = 'tno.cno.time.subject.name.body.fname.fext.ftag.fsize.md5.deleted.fpurged';
 	if (isadmin())
 		$ks .= ".ip*";
 	echo '<TABLE border>';

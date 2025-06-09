@@ -27,6 +27,7 @@ function db_firstrun()
 		fname   TEXT,
 		fext    TEXT,
 		fsize   INTEGER,
+		ftag    INTEGER,
 		deleted INTEGER,
 		fpurged INTEGER
 	) STRICT
@@ -95,9 +96,9 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	$q = $db->prepare('
 	INSERT INTO dat (tno, cno, time, pass, ip,
-		subject, name, body, md5, fname, fext, fsize)
+		subject, name, body, md5, fname, fext, fsize, ftag)
 	VALUES (?, 1, UNIXEPOCH(), ?, ?,
-		?, ?, ?, ?, ?, ?, ?)
+		?, ?, ?, ?, ?, ?, ?, ?)
 	');
 	$q->bindValue(1,  $lastup+1,     PDO::PARAM_STR);
 	$q->bindValue(2,  $hash,         PDO::PARAM_STR);
@@ -109,6 +110,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->bindValue(8,  $t['fname'],   PDO::PARAM_STR);
 	$q->bindValue(9,  $t['fext'],    PDO::PARAM_STR);
 	$q->bindValue(10, $t['fsize'],   PDO::PARAM_INT);
+	$q->bindValue(11, $t['ftag'],    PDO::PARAM_INT);
 	$q->execute();
 
 	# [5/6] get threads whose files to purge

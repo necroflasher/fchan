@@ -7,11 +7,13 @@ function process_up()
 	$subject = trim(userstr(@$_POST['subject']));
 	$name    = trim(userstr(@$_POST['name']));
 	$body    = trim(userstr(@$_POST['body']));
+	$ftag    = userint(@$_POST['tag']);
 	$pass    = userstr(@$_POST['pass']);
 	if ($pass)
 		setcookie('pass', $pass, time()+3*24*60*60);
 
-	$subject or $body or html_die(400, 'Error: Subject or comment required.');
+	$subject or $body       or html_die(400, 'Error: Subject or comment required.');
+	$ftag < count(LONGTAGS) or html_die(400, 'Error: Invalid tag.');
 
 	# file fields
 
@@ -52,6 +54,7 @@ function process_up()
 		'fext'    => $fext,
 		'fsize'   => $fsize,
 		'pass'    => $pass,
+		'ftag'    => $ftag,
 	], $tno, $fpurge_dat);
 
 	if ($err === 'File exists.')

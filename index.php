@@ -14,7 +14,6 @@
 # ni:
 # - more deletion stuff
 #   - cooldown timer
-# - file tags
 # - spam protection
 #   - first, prevent accidental resubmission
 #   - post cooldown (show using post confirm screen?)
@@ -22,7 +21,7 @@
 # - sage
 # - quote links
 
-const FCHAN_DB = '/tmp/fchan.29.db';
+const FCHAN_DB = '/tmp/fchan.30.db';
 
 const FRONT_PUBLIC = '/fchan/';
 
@@ -36,6 +35,10 @@ const EXTS = [
 	'.gif'  => 'image/gif',
 	'.swf'  => 'application/x-shockwave-flash',
 ];
+
+define('SHORTTAGS', '?HPJAGLO');
+define('LONGTAGS', explode(' ',
+	'Unknown Hentai Porn Japanese Anime Game Loop Other'));
 
 require_once 'db.php';
 require_once 'lib.php';
