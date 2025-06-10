@@ -108,5 +108,10 @@ function format_fs($bytes)
 	else if ($bytes < 1024*1024)
 		return number_format($bytes/1024, 0).'&nbsp;KB';
 	else
-		return number_format($bytes/(1024*1024), 1).'&nbsp;MB';
+	{
+		$s = number_format($bytes/(1024*1024), 2).'&nbsp;MB';
+		$s = str_replace('.00&', '&', $s);
+		$s = str_replace('0&', '&', $s);
+		return $s;
+	}
 }
