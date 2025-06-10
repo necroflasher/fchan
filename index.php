@@ -16,7 +16,6 @@
 #   - cooldown timer
 # - spam protection
 #   - first, prevent accidental resubmission
-#   - post cooldown (show using post confirm screen?)
 # eh who cares:
 # - sage
 

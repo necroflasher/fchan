@@ -44,6 +44,9 @@ function db_firstrun()
 	$db->exec('
 	CREATE INDEX dat_reposts ON dat(md5, time) WHERE md5 NOT NULL
 	');
+	$db->exec('
+	CREATE INDEX dat_iplog ON dat(ip, time) WHERE ip NOT NULL
+	');
 }
 
 function db_up($t, &$tno_out, &$fpurge_dat_out)
@@ -57,7 +60,17 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	$db->beginTransaction();
 
-	# [1/7] check number of active threads
+	# [1/8] check post cooldown
+
+	$q = $db->prepare('
+	SELECT UNIXEPOCH() - MAX(time) FROM dat WHERE ip=?
+	');
+	$q->bindValue(1, userip(), PDO::PARAM_STR);
+	$q->execute();
+	if (($val = $q->fetchColumn()) !== null && $val < 2*60)
+		return 'Please wait a while before making a thread again.';
+
+	# [2/8] check number of active threads
 	#       - relax this and only consider recent threads
 
 	$q = $db->prepare('
@@ -70,7 +83,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($q->fetchColumn())
 		return 'Please wait a while before making a thread again.';
 
-	# [2/7] check duplicate file
+	# [3/8] check duplicate file
 
 	$q = $db->prepare('
 	SELECT tno FROM dat WHERE
@@ -85,7 +98,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($tno_out = $q->fetchColumn())
 		return 'File exists.';
 
-	# [3/7] check file cooldown
+	# [4/8] check file cooldown
 
 	$q = $db->prepare('
 	SELECT (UNIXEPOCH() - time) < 24*60*60 FROM dat
@@ -97,7 +110,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($q->fetchColumn())
 		return 'Please wait a while before posting this file again.';
 
-	# [4/7] get current thread number
+	# [5/8] get current thread number
 
 	$q = $db->prepare('
 	SELECT MAX(tno) FROM dat WHERE cno=1
@@ -105,7 +118,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->execute();
 	$lastup = $q->fetchColumn();
 
-	# [5/7] insert thread
+	# [6/8] insert thread
 
 	$q = $db->prepare('
 	INSERT INTO dat (tno, cno, time, pass, ip,
@@ -126,7 +139,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->bindValue(11, $t['ftag'],    PDO::PARAM_INT);
 	$q->execute();
 
-	# [6/7] get threads whose files to purge
+	# [7/8] get threads whose files to purge
 
 	$q = $db->prepare('
 	SELECT fname, fext FROM dat
@@ -137,7 +150,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->execute();
 	$fpurge_dat = $q->fetchAll();
 
-	# [7/7] mark those threads as purged
+	# [8/8] mark those threads as purged
 
 	$q = $db->prepare('
 	UPDATE dat
@@ -169,7 +182,17 @@ function db_re($t, &$cno_out)
 
 	$db->beginTransaction();
 
-	# [1/3] check flags of thread
+	# [1/4] check post cooldown
+
+	$q = $db->prepare('
+	SELECT UNIXEPOCH() - MAX(time) FROM dat WHERE ip=?
+	');
+	$q->bindValue(1, userip(), PDO::PARAM_STR);
+	$q->execute();
+	if (($val = $q->fetchColumn()) !== null && $val < 60)
+		return 'Please wait a while before making a comment again.';
+
+	# [2/4] check flags of thread
 
 	$q = $db->prepare('
 	SELECT deleted, fpurged FROM dat
@@ -183,7 +206,7 @@ function db_re($t, &$cno_out)
 	if ($dat['deleted'] || $dat['fpurged'])
 		return 'Thread is expired or deleted.';
 
-	# [2/3] check reply limit
+	# [3/4] check reply limit
 
 	$q = $db->prepare('SELECT MAX(cno) FROM dat WHERE tno=?');
 	$q->bindValue(1, $t['tno'], PDO::PARAM_INT);
@@ -192,7 +215,7 @@ function db_re($t, &$cno_out)
 	if ($lastcom >= 1000)
 		return 'Reply limit reached.';
 
-	# [3/3] insert post
+	# [4/4] insert post
 
 	$q = $db->prepare('
 	INSERT INTO dat (tno, cno, time, pass, ip, name, body)
