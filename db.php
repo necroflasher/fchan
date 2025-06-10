@@ -267,10 +267,13 @@ function db_get_front()
 	SELECT
 		*,
 		(SELECT MAX(cno)-1 FROM dat AS d WHERE d.tno=dat.tno) AS coms,
-		(SELECT MAX(rowid) FROM dat AS d WHERE d.tno=dat.tno) AS _bump
+		(SELECT MAX(time)  FROM dat AS d WHERE d.tno=dat.tno) AS _maxt,
+		(SELECT MAX(rowid) FROM dat AS d WHERE d.tno=dat.tno) AS _maxr
 	FROM dat
 	WHERE cno=1 AND fpurged IS NULL
-	ORDER BY _bump DESC
+	-- sort by timestamp first (hack for messily imported databases
+	-- with non-chronological rowids)
+	ORDER BY _maxt DESC, _maxr DESC
 	LIMIT 30
 	');
 	$q->execute();
