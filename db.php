@@ -266,10 +266,15 @@ function db_get_front()
 	$q = $db->prepare('
 	SELECT
 		*,
-		(SELECT MAX(cno)-1 FROM dat AS d WHERE d.tno=dat.tno) AS coms,
-		(SELECT MAX(time)  FROM dat AS d WHERE d.tno=dat.tno) AS _maxt,
-		(SELECT MAX(rowid) FROM dat AS d WHERE d.tno=dat.tno) AS _maxr
-	FROM dat
+		(SELECT MAX(cno)-1 FROM dat AS dd WHERE dd.tno=d.tno) AS coms,
+		(SELECT MAX(time)  FROM dat AS dd WHERE dd.tno=d.tno) AS _maxt,
+		(SELECT MAX(rowid) FROM dat AS dd WHERE dd.tno=d.tno) AS _maxr,
+		-- threads newer than this one in dat_alive
+		(CASE cno WHEN 1 THEN (
+			SELECT COUNT(1) FROM dat AS dd
+			WHERE cno=1 AND fpurged IS NULL AND dd.tno>d.tno)
+		ELSE 0 END) AS numnewer
+	FROM dat AS d
 	WHERE cno=1 AND fpurged IS NULL
 	-- sort by timestamp first (hack for messily imported databases
 	-- with non-chronological rowids)
@@ -283,7 +288,16 @@ function db_get_front()
 function db_get_thread($tno)
 {
 	$db = db_open();
-	$q = $db->prepare('SELECT * FROM dat WHERE tno=?');
+	$q = $db->prepare('
+	SELECT
+		*,
+		-- threads newer than this one in dat_alive
+		(CASE cno WHEN 1 THEN (
+			SELECT COUNT(1) FROM dat AS dd
+			WHERE cno=1 AND fpurged IS NULL AND dd.tno>d.tno)
+		ELSE 0 END) AS numnewer
+	FROM dat AS d WHERE tno=?
+	');
 	$q->bindValue(1, $tno, PDO::PARAM_INT);
 	$q->execute();
 	return $q->fetchAll();

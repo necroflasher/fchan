@@ -120,6 +120,8 @@ function render_front()
 		echo   $t['coms'];
 		echo '<TD>';
 		echo   '<A href="?v=thread&no=',$t['tno'],'">Reply</A>';
+		if ($t['numnewer'] >= 30-5)
+			echo '<SPAN title="This thread is old and will be closed soon.">*</SPAN>';
 	}
 	echo '</TABLE>';
 
@@ -204,6 +206,10 @@ function render_thread()
 	{
 		$formdisable = ' disabled="disabled"';
 		echo '<P>&#x25a0; This thread is closed for new comments.';
+	}
+	else if ($dat[0]['numnewer'] >= 30-5)
+	{
+		echo '<P>&#x25a1; This thread is old and will be closed soon.';
 	}
 
 	echo '<FORM action="',FRONT_PUBLIC,'" method="POST">';
