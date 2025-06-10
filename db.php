@@ -15,21 +15,21 @@ function db_firstrun()
 	$db = db_open();
 	$db->exec("
 	CREATE TABLE dat (
-		tno     INTEGER NOT NULL CHECK(tno>=1),
-		cno     INTEGER NOT NULL CHECK(cno>=1),
-		time    INTEGER NOT NULL,
-		pass    TEXT    NOT NULL CHECK(pass<>''),
-		ip      TEXT             CHECK(ip<>''),
-		subject TEXT,
-		name    TEXT,
-		body    TEXT,
-		md5     BLOB,
-		fname   TEXT,
-		fext    TEXT,
-		fsize   INTEGER,
-		ftag    INTEGER,
-		deleted INTEGER,
-		fpurged INTEGER
+		tno      INTEGER NOT NULL CHECK(tno>=1),
+		cno      INTEGER NOT NULL CHECK(cno>=1),
+		ip       TEXT             CHECK(ip<>''),
+		pass     TEXT    NOT NULL CHECK(pass<>''),
+		tcreated REAL    NOT NULL,
+		tdeleted REAL,
+		tfpurged REAL,
+		subject  TEXT,
+		name     TEXT,
+		body     TEXT,
+		md5      BLOB,
+		fname    TEXT,
+		fext     TEXT,
+		fsize    INTEGER,
+		ftag     INTEGER
 	) STRICT
 	");
 	$db->exec('
@@ -39,13 +39,13 @@ function db_firstrun()
 	CREATE UNIQUE INDEX dat_tno ON dat(tno) WHERE cno=1
 	');
 	$db->exec('
-	CREATE INDEX dat_alive ON dat(tno) WHERE cno=1 AND fpurged IS NULL
+	CREATE INDEX dat_alive ON dat(tno) WHERE cno=1 AND tfpurged IS NULL
 	');
 	$db->exec('
-	CREATE INDEX dat_reposts ON dat(md5, time) WHERE md5 NOT NULL
+	CREATE INDEX dat_reposts ON dat(md5, tcreated) WHERE md5 NOT NULL
 	');
 	$db->exec('
-	CREATE INDEX dat_iplog ON dat(ip, time) WHERE ip NOT NULL
+	CREATE INDEX dat_iplog ON dat(ip, tcreated) WHERE ip NOT NULL
 	');
 }
 
@@ -62,9 +62,9 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	# [1/8] check post cooldown
 
-	$q = $db->prepare('
-	SELECT UNIXEPOCH() - MAX(time) FROM dat WHERE ip=?
-	');
+	$q = $db->prepare("
+	SELECT UNIXEPOCH('subsec') - MAX(tcreated) FROM dat WHERE ip=?
+	");
 	$q->bindValue(1, userip(), PDO::PARAM_STR);
 	$q->execute();
 	if (($val = $q->fetchColumn()) !== null && $val < 2*60)
@@ -73,11 +73,11 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	# [2/8] check number of active threads
 	#       - relax this and only consider recent threads
 
-	$q = $db->prepare('
+	$q = $db->prepare("
 	SELECT COUNT(1) >= 6 FROM dat WHERE
-		cno=1 AND fpurged IS NULL AND
-		ip=? AND (UNIXEPOCH() - time) < 3*24*60*60
-	');
+		cno=1 AND tfpurged IS NULL AND
+		ip=? AND (UNIXEPOCH('subsec') - tcreated) < 3*24*60*60
+	");
 	$q->bindValue(1, userip(), PDO::PARAM_STR);
 	$q->execute();
 	if ($q->fetchColumn())
@@ -88,7 +88,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q = $db->prepare('
 	SELECT tno FROM dat WHERE
 		cno=1 AND
-		fpurged IS NULL AND
+		tfpurged IS NULL AND
 		(md5=? OR (fname=? AND fext=?))
 	');
 	$q->bindValue(1, $t['md5'],   PDO::PARAM_LOB);
@@ -100,11 +100,11 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	# [4/8] check file cooldown
 
-	$q = $db->prepare('
-	SELECT (UNIXEPOCH() - time) < 24*60*60 FROM dat
+	$q = $db->prepare("
+	SELECT (UNIXEPOCH('subsec') - tcreated) < 24*60*60 FROM dat
 	WHERE md5=?
-	ORDER BY time DESC
-	');
+	ORDER BY tcreated DESC
+	");
 	$q->bindValue(1, $t['md5'], PDO::PARAM_LOB);
 	$q->execute();
 	if ($q->fetchColumn())
@@ -120,12 +120,12 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	# [6/8] insert thread
 
-	$q = $db->prepare('
-	INSERT INTO dat (tno, cno, time, pass, ip,
+	$q = $db->prepare("
+	INSERT INTO dat (tno, cno, tcreated, pass, ip,
 		subject, name, body, md5, fname, fext, fsize, ftag)
-	VALUES (?, 1, UNIXEPOCH(), ?, ?,
+	VALUES (?, 1, UNIXEPOCH('subsec'), ?, ?,
 		?, ?, ?, ?, ?, ?, ?, ?)
-	');
+	");
 	$q->bindValue(1,  $lastup+1,     PDO::PARAM_STR);
 	$q->bindValue(2,  $hash,         PDO::PARAM_STR);
 	$q->bindValue(3,  userip(),      PDO::PARAM_STR);
@@ -143,7 +143,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	$q = $db->prepare('
 	SELECT fname, fext FROM dat
-	WHERE cno=1 AND fpurged IS NULL
+	WHERE cno=1 AND tfpurged IS NULL
 	ORDER BY tno DESC
 	LIMIT -1 OFFSET 30
 	');
@@ -152,15 +152,15 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	# [8/8] mark those threads as purged
 
-	$q = $db->prepare('
+	$q = $db->prepare("
 	UPDATE dat
-	SET fpurged=1
+	SET tfpurged=UNIXEPOCH('subsec')
 	WHERE cno=1 AND tno IN (
 		SELECT tno FROM dat
-		WHERE cno=1 AND fpurged IS NULL
+		WHERE cno=1 AND tfpurged IS NULL
 		ORDER BY tno DESC
 		LIMIT -1 OFFSET 30)
-	');
+	");
 	$q->execute();
 
 	$db->commit();
@@ -184,9 +184,9 @@ function db_re($t, &$cno_out)
 
 	# [1/4] check post cooldown
 
-	$q = $db->prepare('
-	SELECT UNIXEPOCH() - MAX(time) FROM dat WHERE ip=?
-	');
+	$q = $db->prepare("
+	SELECT UNIXEPOCH('subsec') - MAX(tcreated) FROM dat WHERE ip=?
+	");
 	$q->bindValue(1, userip(), PDO::PARAM_STR);
 	$q->execute();
 	if (($val = $q->fetchColumn()) !== null && $val < 60)
@@ -195,7 +195,7 @@ function db_re($t, &$cno_out)
 	# [2/4] check flags of thread
 
 	$q = $db->prepare('
-	SELECT deleted, fpurged FROM dat
+	SELECT tdeleted, tfpurged FROM dat
 	WHERE tno=? AND cno=1
 	');
 	$q->bindValue(1, $t['tno'], PDO::PARAM_INT);
@@ -203,7 +203,7 @@ function db_re($t, &$cno_out)
 	$dat = $q->fetch();
 	if (!$dat)
 		return 'Thread does not exist.';
-	if ($dat['deleted'] || $dat['fpurged'])
+	if ($dat['tdeleted'] || $dat['tfpurged'])
 		return 'Thread is expired or deleted.';
 
 	# [3/4] check reply limit
@@ -217,10 +217,10 @@ function db_re($t, &$cno_out)
 
 	# [4/4] insert post
 
-	$q = $db->prepare('
-	INSERT INTO dat (tno, cno, time, pass, ip, name, body)
-	VALUES (?, ?, UNIXEPOCH(), ?, ?, ?, ?)
-	');
+	$q = $db->prepare("
+	INSERT INTO dat (tno, cno, tcreated, pass, ip, name, body)
+	VALUES (?, ?, UNIXEPOCH('subsec'), ?, ?, ?, ?)
+	");
 	$q->bindValue(1, $t['tno'],  PDO::PARAM_INT);
 	$q->bindValue(2, $lastcom+1, PDO::PARAM_INT);
 	$q->bindValue(3, $hash,      PDO::PARAM_STR);
@@ -253,7 +253,7 @@ function db_del($tno, $cno, $pass, &$dat_out)
 	$dat = $q->fetch();
 	if (!$dat)
 		return 'Post not found.';
-	if ($dat['deleted'])
+	if ($dat['tdeleted'])
 		return 'Post has already been deleted.';
 	if (!(isadmin() && $pass === '!admindel') &&
 	    !password_verify($pass, $dat['pass']))
@@ -265,13 +265,13 @@ function db_del($tno, $cno, $pass, &$dat_out)
 	$q = $db->prepare("
 	UPDATE dat
 	SET
-		deleted=1,
+		ip=NULL,
+		tdeleted=UNIXEPOCH('subsec'),
+		tfpurged=(CASE cno WHEN 1 THEN UNIXEPOCH('subsec') ELSE NULL END),
 		subject=NULL,
 		name=NULL,
 		body=NULL,
-		fname=NULL,
-		fpurged=(CASE cno WHEN 1 THEN 1 ELSE NULL END),
-		ip=NULL
+		fname=NULL
 	WHERE tno=? AND cno=?
 	");
 	$q->bindValue(1, $tno, PDO::PARAM_INT);
@@ -289,16 +289,16 @@ function db_get_front()
 	$q = $db->prepare('
 	SELECT
 		*,
-		(SELECT MAX(cno)-1 FROM dat AS dd WHERE dd.tno=d.tno) AS coms,
-		(SELECT MAX(time)  FROM dat AS dd WHERE dd.tno=d.tno) AS _maxt,
-		(SELECT MAX(rowid) FROM dat AS dd WHERE dd.tno=d.tno) AS _maxr,
+		(SELECT MAX(cno)-1    FROM dat AS dd WHERE dd.tno=d.tno) AS coms,
+		(SELECT MAX(tcreated) FROM dat AS dd WHERE dd.tno=d.tno) AS _maxt,
+		(SELECT MAX(rowid)    FROM dat AS dd WHERE dd.tno=d.tno) AS _maxr,
 		-- threads newer than this one in dat_alive
 		(CASE cno WHEN 1 THEN (
 			SELECT COUNT(1) FROM dat AS dd
-			WHERE cno=1 AND fpurged IS NULL AND dd.tno>d.tno)
+			WHERE cno=1 AND tfpurged IS NULL AND dd.tno>d.tno)
 		ELSE 0 END) AS numnewer
 	FROM dat AS d
-	WHERE cno=1 AND fpurged IS NULL
+	WHERE cno=1 AND tfpurged IS NULL
 	-- sort by timestamp first (hack for messily imported databases
 	-- with non-chronological rowids)
 	ORDER BY _maxt DESC, _maxr DESC
@@ -317,7 +317,7 @@ function db_get_thread($tno)
 		-- threads newer than this one in dat_alive
 		(CASE cno WHEN 1 THEN (
 			SELECT COUNT(1) FROM dat AS dd
-			WHERE cno=1 AND fpurged IS NULL AND dd.tno>d.tno)
+			WHERE cno=1 AND tfpurged IS NULL AND dd.tno>d.tno)
 		ELSE 0 END) AS numnewer
 	FROM dat AS d WHERE tno=?
 	');

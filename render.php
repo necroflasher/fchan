@@ -163,14 +163,21 @@ function render_thread()
 	{
 		$cno = $t['cno'];
 
-		if ($t['deleted'])
+		if ($t['tdeleted'])
+		{
+			$delpost['tcreated'] = $t['tcreated'];
 			$t = $delpost;
+		}
 
 		echo $cno;
 		echo ': ';
 		echo '<B dir="auto" lang class="wrap" id="c',$cno,'">';
 		echo $t['name']?htmlspecialchars($t['name']):'Anonymous';
 		echo '</B>';
+		echo ' ';
+		echo date('Y-m-d(D) H:i:s', floor($t['tcreated']));
+		echo '.';
+		echo substr(sprintf('%.3f', fmod($t['tcreated'], 1.0)), 2);
 
 		echo ' [';
 		echo '<A href="?v=options&no=',$tno,'&com=',$cno,'">';
@@ -205,8 +212,8 @@ function render_thread()
 
 	# checks: db.php db_re()
 	$formdisable = '';
-	if ($dat[0]['deleted'] ||
-	    $dat[0]['fpurged'] ||
+	if ($dat[0]['tdeleted'] ||
+	    $dat[0]['tfpurged'] ||
 	    count($dat) >= 1000)
 	{
 		$formdisable = ' disabled="disabled"';
@@ -250,7 +257,13 @@ function render_options()
 	$t or html_die(404, 'Error: Post not found.');
 
 	if ($t['md5']) $t['md5'] = bin2hex($t['md5']);
-	$t['time'] = date('Y-m-d H:i:s', $t['time']);
+	foreach (['tcreated', 'tdeleted', 'tfpurged'] as $k)
+	{
+		if (!$t[$k])
+			continue;
+		$t[$k] = strval($t[$k]).
+		    ' <'.date('Y-m-d H:i:s', floor($t[$k])).'>';
+	}
 
 	html_start(200, 'Post details @ fchan');
 
@@ -258,7 +271,7 @@ function render_options()
 	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
 	echo '--></STYLE>';
 
-	$ks = 'tno.cno.time.subject.name.body.fname.fext.ftag.fsize.md5.deleted.fpurged';
+	$ks = 'tno.cno.tcreated.tdeleted.tfpurged.subject.name.body.fname.fext.ftag.fsize.md5';
 	if (isadmin())
 		$ks .= ".ip*";
 	echo '<TABLE border>';
@@ -276,7 +289,7 @@ function render_options()
 	echo '<P>';
 
 	$deldisabled = '';
-	if ($t['deleted'])
+	if ($t['tdeleted'])
 		$deldisabled = ' disabled="disabled"';
 
 	echo '<FORM action="',FRONT_PUBLIC,'" method="POST">';
