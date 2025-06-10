@@ -68,13 +68,20 @@ function render_front()
 			$nametitle = ' title="'.htmlspecialchars($t['name']).'"';
 		}
 
+		$subject = $t['subject'];
+		if (!$subject)
+		{
+			$subject = preg_replace('/(<BR>|\n)(.|\n)*$/', '', $t['body']);
+			$subject = html_entity_decode($subject);
+		}
+
 		$subjtitle = '';
-		if (mb_strlen($t['subject']) <= 20)
-			$subjtext = htmlspecialchars($t['subject']);
+		if (mb_strlen($subject) <= 20)
+			$subjtext = htmlspecialchars($subject);
 		else
 		{
-			$subjtext = htmlspecialchars(mb_substr($t['subject'], 0, 20)).'(...)';
-			$subjtitle = ' title="'.htmlspecialchars($t['subject']).'"';
+			$subjtext = htmlspecialchars(mb_substr($subject, 0, 20)).'(...)';
+			$subjtitle = ' title="'.htmlspecialchars($subject).'"';
 		}
 
 		$ftitle = '';
