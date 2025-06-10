@@ -192,6 +192,11 @@ function render_thread()
 			echo '>';
 			echo '<SPAN dir="auto" lang>',htmlspecialchars($t['fname']),'</SPAN>',$t['fext'];
 			echo '</A>';
+			echo ' (';
+			echo format_fs($t['fsize']);
+			echo ', ';
+			echo LONGTAGS[$t['ftag']];
+			echo ')';
 			
 		}
 		echo '</BLOCKQUOTE>';
