@@ -19,7 +19,6 @@
 #   - post cooldown (show using post confirm screen?)
 # eh who cares:
 # - sage
-# - quote links
 
 const FCHAN_DB = '/tmp/fchan.30.db';
 

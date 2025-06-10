@@ -39,8 +39,7 @@ function process_up()
 
 	$md5 = md5_file($_FILES["file"]["tmp_name"], true);
 
-	$body = htmlspecialchars($body);
-	$body = preg_replace('/\n/', '<BR>', $body);
+	$body = postbody($body);
 
 	$tno = null;
 	$fpurge_dat = null;
@@ -80,8 +79,7 @@ function process_re()
 
 	$body or html_die(400, 'Error: No text entered.');
 
-	$body = htmlspecialchars($body);
-	$body = preg_replace('/\n/', '<BR>', $body);
+	$body = postbody($body);
 
 	$cno = null;
 	$err = db_re([

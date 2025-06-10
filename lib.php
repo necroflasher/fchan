@@ -1,5 +1,14 @@
 <?PHP
 
+function postbody($s)
+{
+	$s = htmlspecialchars($s);
+	$s = preg_replace('/&gt;&gt;([1-9][0-9]*)/', '<A href="#c\1">\0</A>', $s);
+	$s = preg_replace('/^&gt;.*/m', '<I>\0</I>', $s);
+	$s = preg_replace('/\n/', '<BR>', $s);
+	return $s;
+}
+
 function userip()
 {
 	return $_SERVER['REMOTE_ADDR'];
