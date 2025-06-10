@@ -268,9 +268,9 @@ function db_del($tno, $cno, $pass, &$dat_out)
 		ip=NULL,
 		tdeleted=UNIXEPOCH('subsec'),
 		tfpurged=(CASE cno WHEN 1 THEN UNIXEPOCH('subsec') ELSE NULL END),
-		subject=NULL,
-		name=NULL,
-		body=NULL,
+		subject=(CASE cno WHEN 1 THEN '' ELSE NULL END),
+		name='',
+		body='',
 		fname=NULL
 	WHERE tno=? AND cno=?
 	");
