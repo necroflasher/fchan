@@ -37,7 +37,7 @@ const EXTS = [
 
 define('SHORTTAGS', '?HPJAGLO');
 define('LONGTAGS', explode(' ',
-	'Unknown Hentai Porn Japanese Anime Game Loop Other'));
+	'Other Hentai Porn Japanese Anime Game Loop Other'));
 
 require_once 'db.php';
 require_once 'lib.php';
