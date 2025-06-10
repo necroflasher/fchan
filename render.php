@@ -53,6 +53,7 @@ function render_front()
 	echo '<TH>Tag';
 	echo '<TH>Subject';
 	echo '<TH>Size';
+	echo '<TH>Date';
 	echo '<TH>Replies';
 	echo '<TH>';
 	foreach (db_get_front() as $t)
@@ -117,6 +118,8 @@ function render_front()
 		echo   '<SPAN title="',$t['fsize'],' bytes">';
 		echo   format_fs($t['fsize']);
 		echo   '</SPAN>';
+		echo '<TD>';
+		echo   date('Y-m-d', floor($t['tcreated']));
 		echo '<TD align="right">';
 		echo   $t['coms'];
 		echo '<TD>';
