@@ -72,6 +72,7 @@ function render_front()
 		if (!$subject)
 		{
 			$subject = preg_replace('/(<BR>|\n)(.|\n)*$/', '', $t['body']);
+			$subject = preg_replace('/<[^>]*>/', '', $subject);
 			$subject = html_entity_decode($subject);
 		}
 
@@ -140,7 +141,20 @@ function render_thread()
 
 	$dat or html_die(404, 'Error: Thread not found.');
 
-	html_start(200, 'No. ',$tno,' @ fchan');
+	$title = $dat[0]['subject'];
+	if (!$title)
+	{
+		$title = $dat[0]['body'];
+		$title = preg_replace('/<BR>.*/', '', $title);
+		$title = preg_replace('/<[^>]*>/', '', $title);
+		$title = htmlspecialchars_decode($title);
+	}
+	if ($title)
+		$title = mb_substr($title, 0, 80);
+	else
+		$title = 'No. '.$tno;
+
+	html_start(200, $title.' @ fchan');
 
 	echo '<STYLE type="text/css"><!--';
 	echo '.wrap { word-wrap: break-word; overflow-wrap: anywhere; }';
@@ -150,7 +164,6 @@ function render_thread()
 	echo '<B dir="auto" lang class="wrap">';
 	echo $dat[0]['subject']?htmlspecialchars($dat[0]['subject']):'No subject';
 	echo '</B>';
-	echo ' (',$tno,')';
 	echo '</FONT>';
 	echo '<HR>';
 
