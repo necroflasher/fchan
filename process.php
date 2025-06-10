@@ -12,7 +12,6 @@ function process_up()
 	if ($pass)
 		setcookie('pass', $pass, time()+3*24*60*60);
 
-	$subject or $body       or html_die(400, 'Error: Subject or comment required.');
 	$ftag < count(LONGTAGS) or html_die(400, 'Error: Invalid tag.');
 
 	# file fields
