@@ -47,6 +47,36 @@ function db_firstrun()
 	$db->exec('
 	CREATE INDEX dat_iplog ON dat(ip, tcreated) WHERE ip NOT NULL
 	');
+	$db->exec("
+	CREATE TABLE ipban (
+		ip     TEXT PRIMARY KEY NOT NULL,
+		expiry REAL,
+		reason TEXT
+	) STRICT
+	");
+}
+
+function dbc_checkban($db)
+{
+	$q = $db->prepare("
+	SELECT
+		(expiry IS NULL OR expiry > UNIXEPOCH('subsec')) AS banned,
+		ROUND(expiry - UNIXEPOCH('subsec')) AS remainder,
+		reason
+	FROM ipban WHERE ip=?
+	");
+	$q->bindValue(1, userip(), PDO::PARAM_STR);
+	$q->execute();
+	$b = $q->fetch();
+	if (!$b || !$b['banned'])
+		return '';
+	if ($b['remainder'])
+		$msg = "This IP address is banned for {$b['remainder']} more seconds.";
+	else
+		$msg = "This IP address is permanently banned.";
+	if ($b['reason'])
+		$msg .= ' Reason: '.$b['reason'];
+	return $msg;
 }
 
 function db_up($t, &$tno_out, &$fpurge_dat_out)
@@ -60,7 +90,13 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 
 	$db->beginTransaction();
 
-	# [1/8] check post cooldown
+	# [1/9] check bans
+
+	$err = dbc_checkban($db);
+	if ($err)
+		return $err;
+
+	# [2/9] check post cooldown
 
 	$q = $db->prepare("
 	SELECT UNIXEPOCH('subsec') - MAX(tcreated) FROM dat WHERE ip=?
@@ -70,7 +106,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if (($val = $q->fetchColumn()) !== null && $val < 2*60)
 		return 'Please wait a while before making a thread again.';
 
-	# [2/8] check number of active threads
+	# [3/9] check number of active threads
 	#       - relax this and only consider recent threads
 
 	$q = $db->prepare("
@@ -83,7 +119,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($q->fetchColumn())
 		return 'Please wait a while before making a thread again.';
 
-	# [3/8] check duplicate file
+	# [4/9] check duplicate file
 
 	$q = $db->prepare('
 	SELECT tno FROM dat WHERE
@@ -98,7 +134,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($tno_out = $q->fetchColumn())
 		return 'File exists.';
 
-	# [4/8] check file cooldown
+	# [5/9] check file cooldown
 
 	$q = $db->prepare("
 	SELECT (UNIXEPOCH('subsec') - tcreated) < 24*60*60 FROM dat
@@ -110,7 +146,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	if ($q->fetchColumn())
 		return 'Please wait a while before posting this file again.';
 
-	# [5/8] get current thread number
+	# [6/9] get current thread number
 
 	$q = $db->prepare('
 	SELECT MAX(tno) FROM dat WHERE cno=1
@@ -118,7 +154,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->execute();
 	$lastup = $q->fetchColumn();
 
-	# [6/8] insert thread
+	# [7/9] insert thread
 
 	$q = $db->prepare("
 	INSERT INTO dat (tno, cno, tcreated, pass, ip,
@@ -139,7 +175,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->bindValue(11, $t['ftag'],    PDO::PARAM_INT);
 	$q->execute();
 
-	# [7/8] get threads whose files to purge
+	# [8/9] get threads whose files to purge
 
 	$q = $db->prepare('
 	SELECT fname, fext FROM dat
@@ -150,7 +186,7 @@ function db_up($t, &$tno_out, &$fpurge_dat_out)
 	$q->execute();
 	$fpurge_dat = $q->fetchAll();
 
-	# [8/8] mark those threads as purged
+	# [9/9] mark those threads as purged
 
 	$q = $db->prepare("
 	UPDATE dat
@@ -182,7 +218,13 @@ function db_re($t, &$cno_out)
 
 	$db->beginTransaction();
 
-	# [1/4] check post cooldown
+	# [1/5] check bans
+
+	$err = dbc_checkban($db);
+	if ($err)
+		return $err;
+
+	# [2/5] check post cooldown
 
 	$q = $db->prepare("
 	SELECT UNIXEPOCH('subsec') - MAX(tcreated) FROM dat WHERE ip=?
@@ -192,7 +234,7 @@ function db_re($t, &$cno_out)
 	if (($val = $q->fetchColumn()) !== null && $val < 60)
 		return 'Please wait a while before making a comment again.';
 
-	# [2/4] check flags of thread
+	# [3/5] check flags of thread
 
 	$q = $db->prepare('
 	SELECT tdeleted, tfpurged FROM dat
@@ -206,7 +248,7 @@ function db_re($t, &$cno_out)
 	if ($dat['tdeleted'] || $dat['tfpurged'])
 		return 'Thread is expired or deleted.';
 
-	# [3/4] check reply limit
+	# [4/5] check reply limit
 
 	$q = $db->prepare('SELECT MAX(cno) FROM dat WHERE tno=?');
 	$q->bindValue(1, $t['tno'], PDO::PARAM_INT);
@@ -215,7 +257,7 @@ function db_re($t, &$cno_out)
 	if ($lastcom >= 1000)
 		return 'Reply limit reached.';
 
-	# [4/4] insert post
+	# [5/5] insert post
 
 	$q = $db->prepare("
 	INSERT INTO dat (tno, cno, tcreated, pass, ip, name, body)
@@ -242,7 +284,13 @@ function db_del($tno, $cno, $pass, &$dat_out)
 
 	$db->beginTransaction();
 
-	# [1/2] check post exists, password matches
+	# [1/3] check bans
+
+	$err = dbc_checkban($db);
+	if ($err)
+		return $err;
+
+	# [2/3] check post exists, password matches
 
 	$q = $db->prepare("
 	SELECT * FROM dat WHERE tno=? AND cno=?
@@ -260,7 +308,7 @@ function db_del($tno, $cno, $pass, &$dat_out)
 		return 'Wrong password.';
 	$dat_out = $dat;
 
-	# [2/2] set deleted and clear some fields
+	# [3/3] set deleted and clear some fields
 
 	$q = $db->prepare("
 	UPDATE dat

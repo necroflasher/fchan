@@ -19,7 +19,7 @@
 # eh who cares:
 # - sage
 
-const FCHAN_DB = '/tmp/fchan.33.db';
+const FCHAN_DB = '/tmp/fchan.35.db';
 
 const FRONT_PUBLIC = '/fchan/';
 
